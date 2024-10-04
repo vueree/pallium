@@ -5,11 +5,11 @@ import ShadowChat from "./views/ShadowChat.vue";
 </script>
 
 <template>
-  <div>
-    <HeaderBase />
-    <div>
-      <ShadowChat />
-    </div>
-    <FooterBase />
+  <div class="flex flex-column">
+    <HeaderBase class="max-width" />
+    <div class="cl_dived w-full" />
+    <ShadowChat class="max-width mx-auto" />
+    <div class="cl_dived w-full" />
+    <FooterBase class="max-width mx-auto" />
   </div>
 </template>
