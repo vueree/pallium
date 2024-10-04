@@ -1,9 +1,48 @@
-@import "./base.css";
+.flex {
+  display: flex;
+}
 
-#app {
-  max-width: 1200px;
+.flex-column {
+  flex-direction: column;
+}
+
+.justify-between {
+  justify-content: space-between;
+}
+
+.justify-center {
+  justify-content: center;
+}
+
+.items-center {
+  align-items: center;
+}
+
+.text-center {
+  text-align: center;
+}
+
+.p-16 {
+  padding: 16px;
+}
+
+.mx-auto {
   margin: 0 auto;
-  padding: 24px;
-  font-weight: normal;
-  background-color: #8797ad;
+}
+
+.rounded-10 {
+  border-radius: 10px;
+}
+
+.max-width {
+  max-width: 1200px;
+}
+
+.w-full {
+  width: 100%;
+}
+
+.cl_dived {
+  border-bottom: 1px solid #000000;
+  opacity: 25%;
 }
