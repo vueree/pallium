@@ -1,19 +1,38 @@
 <script setup lang="ts">
-import { ref } from "vue";
+import { ref, onMounted, watch } from "vue";
 import InputBase from "@/components/atom/InputBase.vue";
+import BtnBase from "@/components/atom/BtnBase.vue";
 import type { IMessage } from "../types/index.ts";
 
 const chatInput = ref("");
 const messages = ref<IMessage[]>([]);
 
+// Функция для сохранения сообщений в localStorage
+const saveMessagesToLocalStorage = () => {
+  localStorage.setItem("chatMessages", JSON.stringify(messages.value));
+};
+
+// Функция для загрузки сообщений из localStorage
+const loadMessagesFromLocalStorage = () => {
+  const savedMessages = localStorage.getItem("chatMessages");
+  if (savedMessages) {
+    messages.value = JSON.parse(savedMessages).map((message: IMessage) => ({
+      ...message,
+      timestamp: new Date(message.timestamp)
+    }));
+  }
+};
+
 const sendMessage = () => {
   if (chatInput.value.trim()) {
-    messages.value.push({
+    const newMessage = {
       id: Date.now(),
       text: chatInput.value,
       timestamp: new Date()
-    });
+    };
+    messages.value = [...messages.value, newMessage];
     chatInput.value = "";
+    saveMessagesToLocalStorage();
   }
 };
 
@@ -23,13 +42,35 @@ const handleKeydown = (event: KeyboardEvent) => {
     sendMessage();
   }
 };
+
+const removeChat = () => {
+  messages.value = [];
+};
+
+// Загрузка сообщений при монтировании компонента
+onMounted(() => {
+  loadMessagesFromLocalStorage();
+});
+
+// Сохранение сообщений при их изменении
+watch(
+  messages,
+  () => {
+    saveMessagesToLocalStorage();
+  },
+  { deep: true }
+);
 </script>
 
 <template>
   <main
-    :class="[$style.wrapper, 'flex flex-column p-16 w-full h-full mx-auto']"
+    :class="[
+      $style.wrapper,
+      'flex flex-column w-full h-full mx-auto max-width'
+    ]"
   >
-    <div :class="[$style.chatArea, 'flex w-full']">
+    <BtnBase :class="$style['button-remove']" label="" @click="removeChat" />
+    <div :class="[$style.chatArea, 'flex flex-column w-full']">
       <div
         v-for="message in messages"
         :key="message.id"
@@ -47,11 +88,10 @@ const handleKeydown = (event: KeyboardEvent) => {
         class="w-full"
         type="text"
         placeholder="Введите сообщение..."
+        width="1200px"
         @keydown="handleKeydown"
       >
-        <button :class="$style['magic-border-button']">
-          <span :class="$style['magic-border-button__text']">Send</span>
-        </button>
+        <BtnBase @click="sendMessage" />
       </InputBase>
     </div>
   </main>
@@ -59,19 +99,18 @@ const handleKeydown = (event: KeyboardEvent) => {
 
 <style module>
 .wrapper {
-  min-height: 700px;
+  position: relative;
+  height: calc(100vh - 120px);
 }
 
 .chatArea {
   flex-grow: 1;
   overflow-y: auto;
-  flex-direction: column-reverse;
+  padding: 20px 0;
 }
 
 .message {
-  padding: 4px;
-  background-color: #f0f0f0;
-  border-radius: 8px;
+  padding: 4px 0;
   align-self: flex-start;
 }
 
@@ -90,59 +129,12 @@ const handleKeydown = (event: KeyboardEvent) => {
 }
 
 .inputArea {
-  padding-top: 10px;
   margin-top: auto;
 }
 
-.magic-border-button {
-  position: relative;
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  height: 40px;
-  padding: 0 20px;
-  border-radius: 20px;
-  background-color: #1e293b;
-  color: white;
-  font-size: 0.875rem;
-  font-weight: 600;
-  text-transform: uppercase;
-  letter-spacing: 1px;
-  cursor: pointer;
-  border: none;
-  outline: none;
-  overflow: hidden;
-  transition: all 0.3s ease;
-}
-
-.magic-border-button::before {
-  content: "";
+.button-remove {
   position: absolute;
-  left: 0;
-  top: 0;
-  width: 100%;
-  height: 100%;
-  border-radius: 20px;
-  padding: 2px;
-  background: linear-gradient(135deg, #ff6fd8, #3813c2, #ff6fd8, #3813c2);
-  background-size: 400% 400%;
-  animation: magic-border-gradient 5s ease infinite;
-  z-index: 1;
-}
-
-.magic-border-button__text {
-  z-index: 1;
-}
-
-@keyframes magic-border-gradient {
-  0% {
-    background-position: 0% 50%;
-  }
-  50% {
-    background-position: 100% 50%;
-  }
-  100% {
-    background-position: 0% 50%;
-  }
+  right: 0;
+  top: 10px;
 }
 </style>

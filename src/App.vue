@@ -6,9 +6,9 @@ import ShadowChat from "./views/ShadowChat.vue";
 
 <template>
   <div class="flex flex-column">
-    <HeaderBase class="max-width" />
+    <HeaderBase />
     <div class="cl_dived w-full" />
-    <ShadowChat class="max-width mx-auto" />
+    <ShadowChat class="mx-auto" />
     <div class="cl_dived w-full" />
     <FooterBase class="max-width mx-auto" />
   </div>

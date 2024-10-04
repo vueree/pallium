@@ -8,7 +8,7 @@ interface Props {
   id?: string;
   required?: boolean;
   placeholder?: string;
-  minWidth?: string;
+  width?: string;
 }
 
 const props = withDefaults(defineProps<Props>(), {
@@ -17,7 +17,7 @@ const props = withDefaults(defineProps<Props>(), {
   id: "",
   placeholder: "",
   required: false,
-  minWidth: "200px"
+  width: "200px"
 });
 
 const emit = defineEmits(["update:modelValue"]);
@@ -33,42 +33,37 @@ const inputId = computed(
 </script>
 
 <template>
-  <div class="input-wrapper">
+  <div :class="[$style['input-wrapper'], 'flex items-center relative']">
     <input
       v-model="inputValue"
+      :style="{ width: width, height: '26px' }"
+      :class="$style.input"
       :type="type"
       :id="inputId"
       :name="name"
       :placeholder="placeholder"
       :required="required"
-      :style="{ minWidth: minWidth, height: '38px' }"
-    >
-    <slot />
-  </input>
+    />
+    <slot :class="$style.slot" />
   </div>
 </template>
 
-<style scoped>
+<style module>
 .input-wrapper {
   position: relative;
-  width: 100%;
-
+  min-height: 60px;
 }
 
 .input {
-  padding: 0.5rem;
-  border: 1px solid #8b7fe5;
-  border-radius: 4px;
+  padding: 8px 0;
+  border: none;
 }
 
-input::placeholder {
-  color: #5c5e65;
+.input::placeholder {
+  color: #797b85;
 }
 
-input:focus,
-input:not(:placeholder-shown) {
-  transform: translateX(2px);
-  font-size: 0.95rem;
-  color: #333;
+.slot {
+  margin-top: auto;
 }
 </style>

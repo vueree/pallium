@@ -6,24 +6,19 @@ const inputValue = ref("");
 </script>
 
 <template>
-  <header
-    :class="[
-      $style.header,
-      'flex items-center justify-between w-full mx-auto p-16'
-    ]"
-  >
-    <h3>Поступай так, словно это сон. Действуй смело и не ищи оправданий.</h3>
+  <header class="flex items-center justify-between w-full mx-auto max-width">
+    <h3>Добро пожаловать в теневой чат</h3>
     <InputBase
       :modelValue="inputValue"
       type="password"
-      minWidth="200px"
-      placeholder="!#%&..."
+      minWidth="150px"
+      placeholder="Введите шифр..."
     />
   </header>
 </template>
 
 <style module>
-.header {
-  min-height: 100px;
+.title {
+  margin-top: auto;
 }
 </style>
