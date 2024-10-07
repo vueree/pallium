@@ -7,7 +7,7 @@ interface IMessage {
   id: number;
   text: string;
   user: string;
-  timestamp: Date;
+  timestamp: string; // Изменено на string
 }
 
 const chatInput = ref("");
@@ -16,7 +16,6 @@ const chatAreaRef = ref<HTMLElement | null>(null);
 const socket = ref<WebSocket | null>(null);
 const username = ref("User" + Math.floor(Math.random() * 1000));
 const isConnected = ref(false);
-const connectionAttempts = ref(0);
 
 const scrollToBottom = () => {
   nextTick(() => {
@@ -27,88 +26,39 @@ const scrollToBottom = () => {
 };
 
 const connectWebSocket = () => {
-  connectionAttempts.value++;
-  console.log(
-    `Attempting to connect to server... (Attempt ${connectionAttempts.value})`
-  );
-  socket.value = new WebSocket("ws://localhost:5173");
+  socket.value = new WebSocket("ws://localhost:3000");
 
   socket.value.onopen = () => {
-    console.log("Connected to server");
+    console.log("WebSocket connection established");
     isConnected.value = true;
-    connectionAttempts.value = 0;
   };
 
   socket.value.onmessage = (event) => {
-    console.log("Received message from server:", event.data);
-    try {
-      const data = JSON.parse(event.data);
-      if (data.type === "chat history") {
-        console.log("Received chat history:", data.messages);
-        messages.value = data.messages;
-      } else if (data.type === "chat message") {
-        console.log("Received new message:", data.message);
-        messages.value.push(data.message);
-      }
-      scrollToBottom();
-    } catch (error) {
-      console.error("Error parsing message:", error);
-    }
+    const newMessage: IMessage = JSON.parse(event.data);
+    messages.value.push(newMessage); // Add the new message to the messages array
+    scrollToBottom(); // Scroll to the bottom when a new message arrives
   };
 
   socket.value.onerror = (error) => {
     console.error("WebSocket error:", error);
-    isConnected.value = false;
   };
 
-  socket.value.onclose = (event) => {
-    console.log("WebSocket connection closed:", event.code, event.reason);
+  socket.value.onclose = () => {
+    console.log("WebSocket connection closed");
     isConnected.value = false;
-    if (connectionAttempts.value < 5) {
-      setTimeout(connectWebSocket, 5000);
-    } else {
-      console.log(
-        "Max reconnection attempts reached. Please refresh the page."
-      );
-    }
   };
 };
 
 const sendMessage = () => {
-  console.log("Attempting to send message");
   if (chatInput.value.trim() && socket.value && isConnected.value) {
-    console.log("Message is not empty and socket is connected");
-    const newMessage = {
+    const newMessage: IMessage = {
+      id: Date.now(), // Используем временную метку как ID
       text: chatInput.value,
-      user: username.value
+      user: username.value,
+      timestamp: new Date().toISOString() // Используем ISO формат для временной метки
     };
-    console.log("Sending message:", newMessage);
-    socket.value.send(
-      JSON.stringify({ type: "chat message", message: newMessage })
-    );
-
-    // Добавляем сообщение локально перед отправкой на сервер
-    const localMessage = {
-      id: Date.now(),
-      ...newMessage,
-      timestamp: new Date()
-    };
-    messages.value.push(localMessage);
-    console.log("Added local message:", localMessage);
-
-    chatInput.value = "";
-    scrollToBottom();
-  } else {
-    console.log(
-      "Cannot send message. Connected:",
-      isConnected.value,
-      "Socket exists:",
-      !!socket.value
-    );
-    if (!isConnected.value) {
-      console.log("Attempting to reconnect...");
-      connectWebSocket();
-    }
+    socket.value.send(JSON.stringify(newMessage));
+    chatInput.value = ""; // Очищаем инпут после отправки
   }
 };
 
@@ -124,8 +74,24 @@ const removeChat = () => {
   console.log("Chat cleared");
 };
 
+const fetchChatHistory = async () => {
+  try {
+    const response = await fetch("http://localhost:3000/messages");
+    if (!response.ok) {
+      throw new Error(`HTTP error! status: ${response.status}`);
+    }
+    const data = await response.json();
+    console.log("Fetched messages:", data);
+    messages.value = data; // Обновляем массив сообщений
+    scrollToBottom();
+  } catch (error) {
+    console.error("Error fetching messages:", error);
+  }
+};
+
 onMounted(() => {
   connectWebSocket();
+  fetchChatHistory(); // Fetch chat history after connecting
 });
 
 onUnmounted(() => {
@@ -154,7 +120,7 @@ watch(
   >
     <BtnBase
       :class="$style['button-remove']"
-      label="Clear Chat"
+      label="Clear"
       @click="removeChat"
     />
     <div>
@@ -242,7 +208,7 @@ watch(
 
 .button-remove {
   position: absolute;
-  right: 0;
-  top: 10px;
+  right: -120px;
+  top: 44px;
 }
 </style>
