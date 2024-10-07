@@ -1,6 +1,5 @@
 <script setup lang="ts">
 import { ref, onMounted, watch, nextTick, onUnmounted } from "vue";
-import { io, Socket } from "socket.io-client";
 import InputBase from "@/components/atom/InputBase.vue";
 import BtnBase from "@/components/atom/BtnBase.vue";
 
@@ -14,8 +13,10 @@ interface IMessage {
 const chatInput = ref("");
 const messages = ref<IMessage[]>([]);
 const chatAreaRef = ref<HTMLElement | null>(null);
-const socket = ref<Socket | null>(null);
+const socket = ref<WebSocket | null>(null);
 const username = ref("User" + Math.floor(Math.random() * 1000));
+const isConnected = ref(false);
+const connectionAttempts = ref(0);
 
 const scrollToBottom = () => {
   nextTick(() => {
@@ -25,40 +26,89 @@ const scrollToBottom = () => {
   });
 };
 
-const connectSocket = () => {
-  console.log("Attempting to connect to server...");
-  socket.value = io("http://localhost:5173", { transports: ["websocket"] });
+const connectWebSocket = () => {
+  connectionAttempts.value++;
+  console.log(
+    `Attempting to connect to server... (Attempt ${connectionAttempts.value})`
+  );
+  socket.value = new WebSocket("ws://localhost:5173");
 
-  socket.value.on("connect", () => {
+  socket.value.onopen = () => {
     console.log("Connected to server");
-  });
+    isConnected.value = true;
+    connectionAttempts.value = 0;
+  };
 
-  socket.value.on("connect_error", (error) => {
-    console.error("Connection error:", error);
-  });
+  socket.value.onmessage = (event) => {
+    console.log("Received message from server:", event.data);
+    try {
+      const data = JSON.parse(event.data);
+      if (data.type === "chat history") {
+        console.log("Received chat history:", data.messages);
+        messages.value = data.messages;
+      } else if (data.type === "chat message") {
+        console.log("Received new message:", data.message);
+        messages.value.push(data.message);
+      }
+      scrollToBottom();
+    } catch (error) {
+      console.error("Error parsing message:", error);
+    }
+  };
 
-  socket.value.on("chat history", (history: IMessage[]) => {
-    console.log("Received chat history:", history);
-    messages.value = history;
-    scrollToBottom();
-  });
+  socket.value.onerror = (error) => {
+    console.error("WebSocket error:", error);
+    isConnected.value = false;
+  };
 
-  socket.value.on("chat message", (message: IMessage) => {
-    console.log("Received new message:", message);
-    messages.value.push(message);
-    scrollToBottom();
-  });
+  socket.value.onclose = (event) => {
+    console.log("WebSocket connection closed:", event.code, event.reason);
+    isConnected.value = false;
+    if (connectionAttempts.value < 5) {
+      setTimeout(connectWebSocket, 5000);
+    } else {
+      console.log(
+        "Max reconnection attempts reached. Please refresh the page."
+      );
+    }
+  };
 };
 
 const sendMessage = () => {
-  if (chatInput.value.trim() && socket.value) {
+  console.log("Attempting to send message");
+  if (chatInput.value.trim() && socket.value && isConnected.value) {
+    console.log("Message is not empty and socket is connected");
     const newMessage = {
       text: chatInput.value,
       user: username.value
     };
     console.log("Sending message:", newMessage);
-    socket.value.emit("chat message", newMessage);
+    socket.value.send(
+      JSON.stringify({ type: "chat message", message: newMessage })
+    );
+
+    // Добавляем сообщение локально перед отправкой на сервер
+    const localMessage = {
+      id: Date.now(),
+      ...newMessage,
+      timestamp: new Date()
+    };
+    messages.value.push(localMessage);
+    console.log("Added local message:", localMessage);
+
     chatInput.value = "";
+    scrollToBottom();
+  } else {
+    console.log(
+      "Cannot send message. Connected:",
+      isConnected.value,
+      "Socket exists:",
+      !!socket.value
+    );
+    if (!isConnected.value) {
+      console.log("Attempting to reconnect...");
+      connectWebSocket();
+    }
   }
 };
 
@@ -71,20 +121,28 @@ const handleKeydown = (event: KeyboardEvent) => {
 
 const removeChat = () => {
   messages.value = [];
+  console.log("Chat cleared");
 };
 
 onMounted(() => {
-  connectSocket();
+  connectWebSocket();
 });
 
 onUnmounted(() => {
   if (socket.value) {
-    console.log("Disconnecting from server");
-    socket.value.disconnect();
+    console.log("Closing WebSocket connection");
+    socket.value.close();
   }
 });
 
-watch(messages, scrollToBottom, { deep: true });
+watch(
+  messages,
+  (newMessages) => {
+    console.log("Messages updated:", newMessages);
+    scrollToBottom();
+  },
+  { deep: true }
+);
 </script>
 
 <template>
@@ -94,7 +152,14 @@ watch(messages, scrollToBottom, { deep: true });
       'flex flex-column w-full h-full mx-auto max-width'
     ]"
   >
-    <BtnBase :class="$style['button-remove']" label="" @click="removeChat" />
+    <BtnBase
+      :class="$style['button-remove']"
+      label="Clear Chat"
+      @click="removeChat"
+    />
+    <div>
+      Connection status: {{ isConnected ? "Connected" : "Disconnected" }}
+    </div>
     <div
       :class="[$style.chatArea, 'flex flex-column w-full']"
       ref="chatAreaRef"
@@ -123,7 +188,7 @@ watch(messages, scrollToBottom, { deep: true });
         width="1200px"
         @keydown="handleKeydown"
       >
-        <BtnBase @click="sendMessage" />
+        <BtnBase @click="sendMessage" label="Send" />
       </InputBase>
     </div>
   </main>

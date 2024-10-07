@@ -1,66 +1,83 @@
 import express from "express";
 import { createServer } from "http";
-import { Server } from "socket.io";
+import { WebSocketServer } from "ws";
 import debugModule from "debug";
 
 const debug = debugModule("server");
 const app = express();
 const server = createServer(app);
-const io = new Server(server, {
-  cors: {
-    origin: "*",
-    methods: ["GET", "POST"]
-  },
-  pingTimeout: 120000,
-  pingInterval: 5000
-});
+const wss = new WebSocketServer({ server });
 
 const PORT = process.env.PORT || 5173;
 
 let messages = [];
 
-io.on("connection", (socket) => {
-  debug(`New client connected: ${socket.id}`);
-  console.log(`New client connected: ${socket.id}`);
+wss.on("connection", (ws) => {
+  debug(`New client connected`);
+  console.log(`New client connected`);
 
   // Send chat history to the new client
-  debug(`Sending chat history to client: ${socket.id}`);
-  socket.emit("chat history", messages);
+  const historyMessage = JSON.stringify({ type: "chat history", messages });
+  console.log("Sending chat history:", historyMessage);
+  ws.send(historyMessage);
 
-  // Handle new messages
-  socket.on("chat message", (msg) => {
-    debug(`Received new message from ${socket.id}: ${JSON.stringify(msg)}`);
-    const message = {
-      id: Date.now(),
-      text: msg.text,
-      user: msg.user,
-      timestamp: new Date()
-    };
-    messages.push(message);
-    debug(`Broadcasting message to all clients`);
-    io.emit("chat message", message);
+  ws.on("message", (data) => {
+    console.log(`Received raw message: ${data}`);
+    try {
+      const parsedData = JSON.parse(data);
+      console.log(`Parsed message:`, parsedData);
+
+      if (parsedData.type === "chat message") {
+        const message = {
+          id: Date.now(),
+          text: parsedData.message.text,
+          user: parsedData.message.user,
+          timestamp: new Date()
+        };
+        messages.push(message);
+        console.log("Added new message to chat history:", message);
+
+        // Broadcast the message to all clients
+        const broadcastMessage = JSON.stringify({
+          type: "chat message",
+          message
+        });
+        console.log("Broadcasting message:", broadcastMessage);
+        wss.clients.forEach((client) => {
+          if (client.readyState === WebSocketServer.OPEN) {
+            client.send(broadcastMessage);
+          }
+        });
+      }
+    } catch (error) {
+      console.error("Error parsing message:", error);
+    }
   });
 
-  // Handle client disconnection
-  socket.on("disconnect", (reason) => {
-    debug(`Client disconnected: ${socket.id}, reason: ${reason}`);
-    console.log(`Client disconnected: ${socket.id}, reason: ${reason}`);
+  ws.on("close", () => {
+    debug("Client disconnected");
+    console.log("Client disconnected");
   });
 
-  // Handle errors
-  socket.on("error", (error) => {
-    debug(`Error for client ${socket.id}: ${error.message}`);
-    console.error(`Error for client ${socket.id}: ${error.message}`);
+  ws.on("error", (error) => {
+    debug(`WebSocket error: ${error.message}`);
+    console.error(`WebSocket error: ${error.message}`);
   });
 });
 
-// Handle connection errors
-io.on("connect_error", (err) => {
-  debug(`Connection error: ${err.message}`);
-  console.error(`Connection error: ${err.message}`);
+// Heartbeat to keep connections alive
+const interval = setInterval(() => {
+  wss.clients.forEach((ws) => {
+    if (ws.isAlive === false) return ws.terminate();
+    ws.isAlive = false;
+    ws.ping();
+  });
+}, 30000);
+
+wss.on("close", () => {
+  clearInterval(interval);
 });
 
-// Handle server errors
 server.on("error", (error) => {
   debug(`Server error: ${error.message}`);
   console.error(`Server error: ${error.message}`);
@@ -73,5 +90,5 @@ server.listen(PORT, () => {
 
 // Add a basic route for testing
 app.get("/", (req, res) => {
-  res.send("Socket.IO server is running");
+  res.send("WebSocket server is running");
 });
