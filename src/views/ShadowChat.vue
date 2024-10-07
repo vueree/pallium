@@ -1,38 +1,114 @@
 <script setup lang="ts">
-import { ref, onMounted, watch } from "vue";
+import { ref, onMounted, watch, nextTick, onUnmounted } from "vue";
 import InputBase from "@/components/atom/InputBase.vue";
 import BtnBase from "@/components/atom/BtnBase.vue";
-import type { IMessage } from "../types/index.ts";
+
+interface IMessage {
+  id: number;
+  text: string;
+  user: string;
+  timestamp: Date;
+}
 
 const chatInput = ref("");
 const messages = ref<IMessage[]>([]);
+const chatAreaRef = ref<HTMLElement | null>(null);
+const socket = ref<WebSocket | null>(null);
+const username = ref("User" + Math.floor(Math.random() * 1000));
+const isConnected = ref(false);
+const connectionAttempts = ref(0);
 
-// Функция для сохранения сообщений в localStorage
-const saveMessagesToLocalStorage = () => {
-  localStorage.setItem("chatMessages", JSON.stringify(messages.value));
+const scrollToBottom = () => {
+  nextTick(() => {
+    if (chatAreaRef.value) {
+      chatAreaRef.value.scrollTop = chatAreaRef.value.scrollHeight;
+    }
+  });
 };
 
-// Функция для загрузки сообщений из localStorage
-const loadMessagesFromLocalStorage = () => {
-  const savedMessages = localStorage.getItem("chatMessages");
-  if (savedMessages) {
-    messages.value = JSON.parse(savedMessages).map((message: IMessage) => ({
-      ...message,
-      timestamp: new Date(message.timestamp)
-    }));
-  }
+const connectWebSocket = () => {
+  connectionAttempts.value++;
+  console.log(
+    `Attempting to connect to server... (Attempt ${connectionAttempts.value})`
+  );
+  socket.value = new WebSocket("ws://localhost:5173");
+
+  socket.value.onopen = () => {
+    console.log("Connected to server");
+    isConnected.value = true;
+    connectionAttempts.value = 0;
+  };
+
+  socket.value.onmessage = (event) => {
+    console.log("Received message from server:", event.data);
+    try {
+      const data = JSON.parse(event.data);
+      if (data.type === "chat history") {
+        console.log("Received chat history:", data.messages);
+        messages.value = data.messages;
+      } else if (data.type === "chat message") {
+        console.log("Received new message:", data.message);
+        messages.value.push(data.message);
+      }
+      scrollToBottom();
+    } catch (error) {
+      console.error("Error parsing message:", error);
+    }
+  };
+
+  socket.value.onerror = (error) => {
+    console.error("WebSocket error:", error);
+    isConnected.value = false;
+  };
+
+  socket.value.onclose = (event) => {
+    console.log("WebSocket connection closed:", event.code, event.reason);
+    isConnected.value = false;
+    if (connectionAttempts.value < 5) {
+      setTimeout(connectWebSocket, 5000);
+    } else {
+      console.log(
+        "Max reconnection attempts reached. Please refresh the page."
+      );
+    }
+  };
 };
 
 const sendMessage = () => {
-  if (chatInput.value.trim()) {
+  console.log("Attempting to send message");
+  if (chatInput.value.trim() && socket.value && isConnected.value) {
+    console.log("Message is not empty and socket is connected");
     const newMessage = {
-      id: Date.now(),
       text: chatInput.value,
+      user: username.value
+    };
+    console.log("Sending message:", newMessage);
+    socket.value.send(
+      JSON.stringify({ type: "chat message", message: newMessage })
+    );
+
+    // Добавляем сообщение локально перед отправкой на сервер
+    const localMessage = {
+      id: Date.now(),
+      ...newMessage,
       timestamp: new Date()
     };
-    messages.value = [...messages.value, newMessage];
+    messages.value.push(localMessage);
+    console.log("Added local message:", localMessage);
+
     chatInput.value = "";
-    saveMessagesToLocalStorage();
+    scrollToBottom();
+  } else {
+    console.log(
+      "Cannot send message. Connected:",
+      isConnected.value,
+      "Socket exists:",
+      !!socket.value
+    );
+    if (!isConnected.value) {
+      console.log("Attempting to reconnect...");
+      connectWebSocket();
+    }
   }
 };
 
@@ -45,18 +121,25 @@ const handleKeydown = (event: KeyboardEvent) => {
 
 const removeChat = () => {
   messages.value = [];
+  console.log("Chat cleared");
 };
 
-// Загрузка сообщений при монтировании компонента
 onMounted(() => {
-  loadMessagesFromLocalStorage();
+  connectWebSocket();
 });
 
-// Сохранение сообщений при их изменении
+onUnmounted(() => {
+  if (socket.value) {
+    console.log("Closing WebSocket connection");
+    socket.value.close();
+  }
+});
+
 watch(
   messages,
-  () => {
-    saveMessagesToLocalStorage();
+  (newMessages) => {
+    console.log("Messages updated:", newMessages);
+    scrollToBottom();
   },
   { deep: true }
 );
@@ -69,16 +152,30 @@ watch(
       'flex flex-column w-full h-full mx-auto max-width'
     ]"
   >
-    <BtnBase :class="$style['button-remove']" label="" @click="removeChat" />
-    <div :class="[$style.chatArea, 'flex flex-column w-full']">
+    <BtnBase
+      :class="$style['button-remove']"
+      label="Clear Chat"
+      @click="removeChat"
+    />
+    <div>
+      Connection status: {{ isConnected ? "Connected" : "Disconnected" }}
+    </div>
+    <div
+      :class="[$style.chatArea, 'flex flex-column w-full']"
+      ref="chatAreaRef"
+    >
       <div
         v-for="message in messages"
         :key="message.id"
-        :class="$style.message"
+        :class="[
+          $style.message,
+          message.user === username ? $style.ownMessage : ''
+        ]"
       >
+        <span :class="$style.messageUser">{{ message.user }}</span>
         <span :class="$style.messageText">{{ message.text }}</span>
         <span :class="$style.messageTime">{{
-          message.timestamp.toLocaleTimeString()
+          new Date(message.timestamp).toLocaleTimeString()
         }}</span>
       </div>
     </div>
@@ -91,7 +188,7 @@ watch(
         width="1200px"
         @keydown="handleKeydown"
       >
-        <BtnBase @click="sendMessage" />
+        <BtnBase @click="sendMessage" label="Send" />
       </InputBase>
     </div>
   </main>
@@ -110,22 +207,33 @@ watch(
 }
 
 .message {
-  padding: 4px 0;
+  padding: 8px;
+  margin-bottom: 8px;
+  border-radius: 8px;
+  background-color: #f0f0f0;
   align-self: flex-start;
+  max-width: 70%;
+}
+
+.ownMessage {
+  align-self: flex-end;
+  background-color: #dcf8c6;
+}
+
+.messageUser {
+  font-weight: bold;
+  margin-right: 8px;
 }
 
 .messageText {
   display: block;
 }
 
-.messageText,
-.message {
-  margin-bottom: 4px;
-}
-
 .messageTime {
   font-size: 0.8em;
   color: #888;
+  display: block;
+  text-align: right;
 }
 
 .inputArea {
