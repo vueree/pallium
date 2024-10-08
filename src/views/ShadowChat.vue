@@ -2,20 +2,17 @@
 import { ref, onMounted, watch, nextTick, onUnmounted } from "vue";
 import InputBase from "@/components/atom/InputBase.vue";
 import BtnBase from "@/components/atom/BtnBase.vue";
+import { useWebSocketStore } from "@/stores/useWebSocketStore";
+import type { IMessage } from "@/types";
 
-interface IMessage {
-  id: number;
-  text: string;
-  user: string;
-  timestamp: string; // Изменено на string
-}
-
-const chatInput = ref("");
-const messages = ref<IMessage[]>([]);
+const chatInputRef = ref("");
+const messagesRef = ref<IMessage[]>([]);
 const chatAreaRef = ref<HTMLElement | null>(null);
-const socket = ref<WebSocket | null>(null);
-const username = ref("User" + Math.floor(Math.random() * 1000));
-const isConnected = ref(false);
+const socketRef = ref<WebSocket | null>(null);
+const usernameRef = ref("User" + Math.floor(Math.random() * 1000));
+const isConnectedRef = ref(false);
+
+const webSocketStore = useWebSocketStore(); // Используем store
 
 const scrollToBottom = () => {
   nextTick(() => {
@@ -26,39 +23,46 @@ const scrollToBottom = () => {
 };
 
 const connectWebSocket = () => {
-  socket.value = new WebSocket("ws://localhost:3000");
+  socketRef.value = new WebSocket("ws://localhost:3000");
 
-  socket.value.onopen = () => {
-    console.log("WebSocket connection established");
-    isConnected.value = true;
+  socketRef.value.onopen = () => {
+    isConnectedRef.value = true;
+    webSocketStore.setConnectionStatus(true);
   };
 
-  socket.value.onmessage = (event) => {
+  socketRef.value.onmessage = (event) => {
     const newMessage: IMessage = JSON.parse(event.data);
-    messages.value.push(newMessage); // Add the new message to the messages array
-    scrollToBottom(); // Scroll to the bottom when a new message arrives
+    messagesRef.value.push(newMessage);
+    scrollToBottom();
   };
 
-  socket.value.onerror = (error) => {
+  socketRef.value.onerror = (error) => {
     console.error("WebSocket error:", error);
   };
 
-  socket.value.onclose = () => {
-    console.log("WebSocket connection closed");
-    isConnected.value = false;
+  socketRef.value.onclose = () => {
+    webSocketStore.setConnectionStatus(false);
+    isConnectedRef.value = false;
   };
 };
 
+const reloadWebSocket = () => {
+  if (socketRef.value) {
+    socketRef.value.close();
+  }
+  connectWebSocket();
+};
+
 const sendMessage = () => {
-  if (chatInput.value.trim() && socket.value && isConnected.value) {
+  if (chatInputRef.value.trim() && socketRef.value && isConnectedRef.value) {
     const newMessage: IMessage = {
-      id: Date.now(), // Используем временную метку как ID
-      text: chatInput.value,
-      user: username.value,
-      timestamp: new Date().toISOString() // Используем ISO формат для временной метки
+      id: Date.now(),
+      text: chatInputRef.value,
+      user: usernameRef.value,
+      timestamp: new Date().toISOString()
     };
-    socket.value.send(JSON.stringify(newMessage));
-    chatInput.value = ""; // Очищаем инпут после отправки
+    socketRef.value.send(JSON.stringify(newMessage));
+    chatInputRef.value = "";
   }
 };
 
@@ -69,40 +73,66 @@ const handleKeydown = (event: KeyboardEvent) => {
   }
 };
 
-const removeChat = () => {
-  messages.value = [];
-  console.log("Chat cleared");
-};
-
-const fetchChatHistory = async () => {
+const getChatHistory = async () => {
   try {
-    const response = await fetch("http://localhost:3000/messages");
+    const response = await fetch("http://localhost:3000/getMessages");
     if (!response.ok) {
       throw new Error(`HTTP error! status: ${response.status}`);
     }
     const data = await response.json();
     console.log("Fetched messages:", data);
-    messages.value = data; // Обновляем массив сообщений
+    messagesRef.value = data;
     scrollToBottom();
   } catch (error) {
     console.error("Error fetching messages:", error);
   }
 };
 
+const clearChatHistory = async () => {
+  try {
+    const response = await fetch("http://localhost:3000/clearMessages", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json"
+      },
+      body: JSON.stringify({ cleaning: true }) // Отправляем поле cleaning: true
+    });
+
+    if (!response.ok) {
+      throw new Error(`HTTP error! status: ${response.status}`);
+    }
+
+    const data = await response.json();
+    if (data.success) {
+      console.log("Chat history cleared successfully");
+      messagesRef.value = []; // Очищаем сообщения на фронте
+    } else {
+      console.error("Failed to clear chat history:", data.message);
+    }
+  } catch (error) {
+    console.error("Error clearing chat history:", error);
+  }
+};
+
+const removeChat = () => {
+  messagesRef.value = [];
+  clearChatHistory();
+};
+
 onMounted(() => {
   connectWebSocket();
-  fetchChatHistory(); // Fetch chat history after connecting
+  getChatHistory();
 });
 
 onUnmounted(() => {
-  if (socket.value) {
+  if (socketRef.value) {
     console.log("Closing WebSocket connection");
-    socket.value.close();
+    socketRef.value.close();
   }
 });
 
 watch(
-  messages,
+  messagesRef,
   (newMessages) => {
     console.log("Messages updated:", newMessages);
     scrollToBottom();
@@ -123,19 +153,29 @@ watch(
       label="Clear"
       @click="removeChat"
     />
+    <!-- <div>
+      <span>WebSockets:</span>
+      <span :class="isConnectedRef ? 'cl_green' : 'cl_red'">{{
+        isConnectedRef ? "Connected" : "Disconnected"
+      }}</span>
+    </div> -->
     <div>
-      Connection status: {{ isConnected ? "Connected" : "Disconnected" }}
+      <BtnBase
+        label="Reconnect WebSocket"
+        @click="reloadWebSocket"
+        :class="$style['button-reconnect']"
+      />
     </div>
     <div
       :class="[$style.chatArea, 'flex flex-column w-full']"
       ref="chatAreaRef"
     >
       <div
-        v-for="message in messages"
+        v-for="message in messagesRef"
         :key="message.id"
         :class="[
           $style.message,
-          message.user === username ? $style.ownMessage : ''
+          message.user === usernameRef ? $style.ownMessage : ''
         ]"
       >
         <span :class="$style.messageUser">{{ message.user }}</span>
@@ -147,7 +187,7 @@ watch(
     </div>
     <div :class="[$style.inputArea, 'flex']">
       <InputBase
-        v-model="chatInput"
+        v-model="chatInputRef"
         class="w-full"
         type="text"
         placeholder="Введите сообщение..."
@@ -208,7 +248,18 @@ watch(
 
 .button-remove {
   position: absolute;
-  right: -120px;
-  top: 44px;
+  right: -200px;
+  top: -50px;
+}
+
+.button-reconnect {
+  margin: 10px; /* Отступ между кнопками */
+  background-color: #007bff; /* Цвет фона кнопки */
+  color: white; /* Цвет текста */
+  border: none; /* Убираем обводку */
+  padding: 10px 15px; /* Отступы внутри кнопки */
+  border-radius: 5px; /* Закругленные углы */
+  cursor: pointer; /* Указатель при наведении */
+  transition: background-color 0.3s; /* Анимация при наведении */
 }
 </style>

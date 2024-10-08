@@ -99,8 +99,21 @@ wss.on("connection", (ws) => {
 });
 
 // Serve messages on GET request
-app.get("/messages", (req, res) => {
+app.get("/getMessages", (req, res) => {
   res.json(messages); // Возвращаем загруженные сообщения из файла
+});
+
+// Метод POST для очистки сообщений
+app.post("/clearMessages", (req, res) => {
+  const { cleaning } = req.body;
+
+  if (cleaning === true) {
+    messages = []; // Очищаем массив сообщений
+    saveMessages(); // Сохраняем пустой массив в файл
+    res.json({ success: true, message: "Messages cleared successfully" });
+  } else {
+    res.status(400).json({ success: false, message: "Invalid request" });
+  }
 });
 
 // Проверка активности клиентов

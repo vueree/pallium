@@ -20,6 +20,10 @@ input {
   justify-content: space-between;
 }
 
+.justify-start {
+  justify-content: flex-start;
+}
+
 .justify-center {
   justify-content: center;
 }
@@ -55,4 +59,12 @@ input {
 .cl_dived {
   border-bottom: 1px solid #000000;
   opacity: 25%;
+}
+
+.cl_red {
+  color: red;
+}
+
+.cl_green {
+  color: green;
 }

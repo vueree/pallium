@@ -2,14 +2,14 @@
 import { ref } from "vue";
 import InputBase from "./atom/InputBase.vue";
 
-const inputValue = ref("");
+const inputValueRef = ref("");
 </script>
 
 <template>
   <header class="flex items-center justify-between w-full mx-auto max-width">
     <h3>Добро пожаловать в теневой чат</h3>
     <InputBase
-      :modelValue="inputValue"
+      :modelValue="inputValueRef"
       type="password"
       minWidth="150px"
       placeholder="Введите шифр..."
