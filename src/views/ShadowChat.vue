@@ -2,21 +2,17 @@
 import { ref, onMounted, watch, nextTick, onUnmounted } from "vue";
 import InputBase from "@/components/atom/InputBase.vue";
 import BtnBase from "@/components/atom/BtnBase.vue";
+import { useWebSocketStore } from "@/stores/useWebSocketStore";
+import type { IMessage } from "@/types";
 
-interface IMessage {
-  id: number;
-  text: string;
-  user: string;
-  timestamp: Date;
-}
-
-const chatInput = ref("");
-const messages = ref<IMessage[]>([]);
+const chatInputRef = ref("");
+const messagesRef = ref<IMessage[]>([]);
 const chatAreaRef = ref<HTMLElement | null>(null);
-const socket = ref<WebSocket | null>(null);
-const username = ref("User" + Math.floor(Math.random() * 1000));
-const isConnected = ref(false);
-const connectionAttempts = ref(0);
+const socketRef = ref<WebSocket | null>(null);
+const usernameRef = ref("User" + Math.floor(Math.random() * 1000));
+const isConnectedRef = ref(false);
+
+const webSocketStore = useWebSocketStore(); // Используем store
 
 const scrollToBottom = () => {
   nextTick(() => {
@@ -27,88 +23,46 @@ const scrollToBottom = () => {
 };
 
 const connectWebSocket = () => {
-  connectionAttempts.value++;
-  console.log(
-    `Attempting to connect to server... (Attempt ${connectionAttempts.value})`
-  );
-  socket.value = new WebSocket("ws://localhost:5173");
+  socketRef.value = new WebSocket("ws://localhost:3000");
 
-  socket.value.onopen = () => {
-    console.log("Connected to server");
-    isConnected.value = true;
-    connectionAttempts.value = 0;
+  socketRef.value.onopen = () => {
+    isConnectedRef.value = true;
+    webSocketStore.setConnectionStatus(true);
   };
 
-  socket.value.onmessage = (event) => {
-    console.log("Received message from server:", event.data);
-    try {
-      const data = JSON.parse(event.data);
-      if (data.type === "chat history") {
-        console.log("Received chat history:", data.messages);
-        messages.value = data.messages;
-      } else if (data.type === "chat message") {
-        console.log("Received new message:", data.message);
-        messages.value.push(data.message);
-      }
-      scrollToBottom();
-    } catch (error) {
-      console.error("Error parsing message:", error);
-    }
+  socketRef.value.onmessage = (event) => {
+    const newMessage: IMessage = JSON.parse(event.data);
+    messagesRef.value.push(newMessage);
+    scrollToBottom();
   };
 
-  socket.value.onerror = (error) => {
+  socketRef.value.onerror = (error) => {
     console.error("WebSocket error:", error);
-    isConnected.value = false;
   };
 
-  socket.value.onclose = (event) => {
-    console.log("WebSocket connection closed:", event.code, event.reason);
-    isConnected.value = false;
-    if (connectionAttempts.value < 5) {
-      setTimeout(connectWebSocket, 5000);
-    } else {
-      console.log(
-        "Max reconnection attempts reached. Please refresh the page."
-      );
-    }
+  socketRef.value.onclose = () => {
+    webSocketStore.setConnectionStatus(false);
+    isConnectedRef.value = false;
   };
 };
 
+const reloadWebSocket = () => {
+  if (socketRef.value) {
+    socketRef.value.close();
+  }
+  connectWebSocket();
+};
+
 const sendMessage = () => {
-  console.log("Attempting to send message");
-  if (chatInput.value.trim() && socket.value && isConnected.value) {
-    console.log("Message is not empty and socket is connected");
-    const newMessage = {
-      text: chatInput.value,
-      user: username.value
-    };
-    console.log("Sending message:", newMessage);
-    socket.value.send(
-      JSON.stringify({ type: "chat message", message: newMessage })
-    );
-
-    // Добавляем сообщение локально перед отправкой на сервер
-    const localMessage = {
+  if (chatInputRef.value.trim() && socketRef.value && isConnectedRef.value) {
+    const newMessage: IMessage = {
       id: Date.now(),
-      ...newMessage,
-      timestamp: new Date()
+      text: chatInputRef.value,
+      user: usernameRef.value,
+      timestamp: new Date().toISOString()
     };
-    messages.value.push(localMessage);
-    console.log("Added local message:", localMessage);
-
-    chatInput.value = "";
-    scrollToBottom();
-  } else {
-    console.log(
-      "Cannot send message. Connected:",
-      isConnected.value,
-      "Socket exists:",
-      !!socket.value
-    );
-    if (!isConnected.value) {
-      console.log("Attempting to reconnect...");
-      connectWebSocket();
-    }
+    socketRef.value.send(JSON.stringify(newMessage));
+    chatInputRef.value = "";
   }
 };
 
@@ -119,24 +73,66 @@ const handleKeydown = (event: KeyboardEvent) => {
   }
 };
 
+const getChatHistory = async () => {
+  try {
+    const response = await fetch("http://localhost:3000/getMessages");
+    if (!response.ok) {
+      throw new Error(`HTTP error! status: ${response.status}`);
+    }
+    const data = await response.json();
+    console.log("Fetched messages:", data);
+    messagesRef.value = data;
+    scrollToBottom();
+  } catch (error) {
+    console.error("Error fetching messages:", error);
+  }
+};
+
+const clearChatHistory = async () => {
+  try {
+    const response = await fetch("http://localhost:3000/clearMessages", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json"
+      },
+      body: JSON.stringify({ cleaning: true }) // Отправляем поле cleaning: true
+    });
+
+    if (!response.ok) {
+      throw new Error(`HTTP error! status: ${response.status}`);
+    }
+
+    const data = await response.json();
+    if (data.success) {
+      console.log("Chat history cleared successfully");
+      messagesRef.value = []; // Очищаем сообщения на фронте
+    } else {
+      console.error("Failed to clear chat history:", data.message);
+    }
+  } catch (error) {
+    console.error("Error clearing chat history:", error);
+  }
+};
+
 const removeChat = () => {
-  messages.value = [];
-  console.log("Chat cleared");
+  messagesRef.value = [];
+  clearChatHistory();
 };
 
 onMounted(() => {
   connectWebSocket();
+  getChatHistory();
 });
 
 onUnmounted(() => {
-  if (socket.value) {
+  if (socketRef.value) {
     console.log("Closing WebSocket connection");
-    socket.value.close();
+    socketRef.value.close();
   }
 });
 
 watch(
-  messages,
+  messagesRef,
   (newMessages) => {
     console.log("Messages updated:", newMessages);
     scrollToBottom();
@@ -154,22 +150,32 @@ watch(
   >
     <BtnBase
       :class="$style['button-remove']"
-      label="Clear Chat"
+      label="Clear"
       @click="removeChat"
     />
+    <!-- <div>
+      <span>WebSockets:</span>
+      <span :class="isConnectedRef ? 'cl_green' : 'cl_red'">{{
+        isConnectedRef ? "Connected" : "Disconnected"
+      }}</span>
+    </div> -->
     <div>
-      Connection status: {{ isConnected ? "Connected" : "Disconnected" }}
+      <BtnBase
+        label="Reconnect WebSocket"
+        @click="reloadWebSocket"
+        :class="$style['button-reconnect']"
+      />
     </div>
     <div
       :class="[$style.chatArea, 'flex flex-column w-full']"
       ref="chatAreaRef"
     >
       <div
-        v-for="message in messages"
+        v-for="message in messagesRef"
         :key="message.id"
         :class="[
           $style.message,
-          message.user === username ? $style.ownMessage : ''
+          message.user === usernameRef ? $style.ownMessage : ''
         ]"
       >
         <span :class="$style.messageUser">{{ message.user }}</span>
@@ -181,7 +187,7 @@ watch(
     </div>
     <div :class="[$style.inputArea, 'flex']">
       <InputBase
-        v-model="chatInput"
+        v-model="chatInputRef"
         class="w-full"
         type="text"
         placeholder="Введите сообщение..."
@@ -242,7 +248,18 @@ watch(
 
 .button-remove {
   position: absolute;
-  right: 0;
-  top: 10px;
+  right: -200px;
+  top: -50px;
+}
+
+.button-reconnect {
+  margin: 10px; /* Отступ между кнопками */
+  background-color: #007bff; /* Цвет фона кнопки */
+  color: white; /* Цвет текста */
+  border: none; /* Убираем обводку */
+  padding: 10px 15px; /* Отступы внутри кнопки */
+  border-radius: 5px; /* Закругленные углы */
+  cursor: pointer; /* Указатель при наведении */
+  transition: background-color 0.3s; /* Анимация при наведении */
 }
 </style>
