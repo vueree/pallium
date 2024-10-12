@@ -2,19 +2,17 @@
 import { defineEmits, defineProps } from "vue";
 
 const emit = defineEmits(["update:active"]);
-const props = defineProps({
-  label: {
-    type: String,
-    default: "Send"
-  },
-  disabled: {
-    type: Boolean,
-    default: false
-  },
-  width: {
-    type: String,
-    default: "20px"
-  }
+
+interface IProps {
+  targetButton?: "SendMessage" | "CleanChat" | "";
+  label?: string;
+  disabled?: boolean;
+}
+
+const props = withDefaults(defineProps<IProps>(), {
+  targetButton: "",
+  label: "",
+  disabled: false
 });
 
 const handleClick = () => {
@@ -26,57 +24,91 @@ const handleClick = () => {
 
 <template>
   <button
-    :class="$style['magic-border-button']"
-    :style="{ minWidth: width }"
+    :class="[
+      'flex items-center justify-center',
+      { [$style.btn]: !isLogin, [$style['btn-login']]: !isLogin }
+    ]"
     :disabled="disabled"
     @click="handleClick"
   >
-    <span :class="$style['magic-border-button__text']">{{ props.label }}</span>
+    <span v-show="label" :class="$style.label">{{ label }}</span>
+    <svg
+      v-show="targetButton === 'SendMessage'"
+      width="20px"
+      height="20px"
+      viewBox="0 0 24 24"
+      fill="#fff"
+      xmlns="http://www.w3.org/2000/svg"
+    >
+      <path
+        d="M10 14L13 21L20 4L3 11L6.5 12.5"
+        stroke="#fff"
+        stroke-width="1.5"
+        stroke-linecap="round"
+        stroke-linejoin="round"
+      />
+    </svg>
+    <svg
+      v-show="targetButton === 'CleanChat'"
+      fill="#fff"
+      width="20px"
+      height="20px"
+      viewBox="0 0 64 64"
+      xmlns="http://www.w3.org/2000/svg"
+    >
+      <title />
+      <g data-name="Layer 50" id="Layer_50">
+        <rect height="12" width="2" x="25" y="26" />
+        <rect height="12" width="2" x="31" y="26" />
+        <rect height="12" width="2" x="37" y="26" />
+        <path
+          d="M50.79,9H48.93a10.16,10.16,0,0,0-7.31-3,11.2,11.2,0,0,0-1.55.11A12.54,12.54,0,0,0,31.67,3,12.73,12.73,0,0,0,24.2,5.38,8.22,8.22,0,0,0,21.73,5a7.68,7.68,0,0,0-6.87,4H13.21A3.12,3.12,0,0,0,10,12v2a2.93,2.93,0,0,0,1.14,2.28l5.35,41.44A3.82,3.82,0,0,0,20.3,61H43.7a3.82,3.82,0,0,0,3.81-3.28l5.35-41.44A2.93,2.93,0,0,0,54,14V12A3.12,3.12,0,0,0,50.79,9ZM21.73,7A6.28,6.28,0,0,1,24,7.43l.54.21L25,7.28a10.88,10.88,0,0,1,14.06.62l.38.36.51-.1A8.23,8.23,0,0,1,41.62,8a8.55,8.55,0,0,1,4.05,1H17.22A5.88,5.88,0,0,1,21.73,7ZM12,12a1.13,1.13,0,0,1,1.21-1H50.79A1.13,1.13,0,0,1,52,12v2a1.13,1.13,0,0,1-1.21,1H13.21A1.13,1.13,0,0,1,12,14ZM45.52,57.46A1.81,1.81,0,0,1,43.7,59H20.3a1.81,1.81,0,0,1-1.82-1.54L13.25,17h37.5Z"
+        />
+      </g>
+    </svg>
   </button>
 </template>
 
 <style module>
-.magic-border-button {
-  position: relative;
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  height: 40px;
-  padding: 0 20px;
-  border-radius: 20px;
-  font-size: 0.875rem;
-  font-weight: 600;
-  text-transform: uppercase;
-  letter-spacing: 1px;
-  min-height: 40px;
-  cursor: pointer;
-  border: none;
-  outline: none;
-  overflow: hidden;
-  transition: all 0.3s ease;
-  background-color: #ff6fd8;
-}
-
-.magic-border-button::before {
-  content: "";
-  position: absolute;
-  top: 0;
-  left: -100%;
-  width: 300%;
-  height: 100%;
-  background: linear-gradient(90deg, #ff6fd8, #6f86ff, #ff6fd8);
-  transition: all 0.4s ease;
-  z-index: 0;
-}
-
-.magic-border-button:hover::before {
-  left: 0;
-  transition: all 0.4s ease;
-}
-
-.magic-border-button__text {
-  z-index: 1;
+.btn {
+  transition: 0.5s;
+  background-size: 200% auto;
   color: white;
-  position: relative;
+  box-shadow: 0 0 20px #eee;
+  border-radius: 10px;
+  border: none;
+  background-image: linear-gradient(
+    to right,
+    #003cc5 0%,
+    #0b63f6 51%,
+    #003cc5 100%
+  );
+  padding: 8px 12px;
+  cursor: pointer;
+}
+
+.btn-login {
+  transition: 0.5s;
+  background-size: 200% auto;
+  color: white;
+  box-shadow: 0 0 20px #eee;
+  border-radius: 10px;
+  border: none;
+  background-image: linear-gradient(
+    to right,
+    #6b86c4 0%,
+    #809ccc 51%,
+    #7893cf 100%
+  );
+  opacity: 50%;
+  cursor: pointer;
+}
+
+.btn:hover {
+  background-position: right center;
+}
+
+.label {
+  margin-right: 6px;
 }
 </style>

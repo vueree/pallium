@@ -6,24 +6,26 @@ const webSocketStore = useWebSocketStore();
 
 <template>
   <footer :class="[$style.wrapper, 'flex items-center w-full']">
-    <div class="flex justify-start w-full">
-      <p :class="$style.title">WebSockets:</p>
-      <p :class="webSocketStore.isConnected ? 'cl_green' : 'cl_red'">
-        {{ webSocketStore.isConnected ? "Connected" : "Disconnected" }}
-      </p>
-    </div>
+    <p
+      :class="
+        webSocketStore.isConnected ? $style['cl-green'] : $style['cl-red']
+      "
+    >
+      {{ webSocketStore.isConnected ? "Connected" : "Disconnected" }}
+    </p>
   </footer>
 </template>
 
 <style module>
-footer {
+.wrapper {
   max-height: 60px;
-  gap: 8px;
 }
-span {
-  margin-right: auto;
+
+.cl-green {
+  color: green;
 }
-.title {
-  margin-right: 8px;
+
+.cl-red {
+  color: red;
 }
 </style>

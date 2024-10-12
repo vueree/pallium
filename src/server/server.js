@@ -1,6 +1,6 @@
 import express from "express";
 import { createServer } from "http";
-import { WebSocketServer } from "ws"; // Импортируем WebSocketServer из библиотеки ws
+import { WebSocketServer } from "ws";
 import debugModule from "debug";
 import cors from "cors";
 import { fileURLToPath } from "url";
@@ -19,9 +19,9 @@ const PORT = process.env.PORT || 3000;
 // Настройка CORS
 app.use(
   cors({
-    origin: "http://localhost:5173", // Разрешаем доступ только с этого источника
-    methods: ["GET", "POST", "OPTIONS"], // Указываем разрешенные методы
-    allowedHeaders: ["Content-Type", "Authorization"] // Указываем разрешенные заголовки
+    origin: "http://localhost:5173",
+    methods: ["GET", "POST", "OPTIONS"],
+    allowedHeaders: ["Content-Type", "Authorization"]
   })
 );
 
@@ -83,8 +83,7 @@ wss.on("connection", (ws) => {
     // Отправляем сообщение всем клиентам
     wss.clients.forEach((client) => {
       if (client.readyState === client.OPEN) {
-        // Используем client вместо WebSocket
-        client.send(JSON.stringify(newMessage)); // Посылаем новое сообщение всем клиентам
+        client.send(JSON.stringify(newMessage));
       }
     });
   });
@@ -100,31 +99,9 @@ wss.on("connection", (ws) => {
 
 // Serve messages on GET request
 app.get("/getMessages", (req, res) => {
-  res.json(messages); // Возвращаем загруженные сообщения из файла
+  res.json(messages);
 });
 
 // Метод POST для очистки сообщений
 app.post("/clearMessages", (req, res) => {
-  const { cleaning } = req.body;
-
-  if (cleaning === true) {
-    messages = []; // Очищаем массив сообщений
-    saveMessages(); // Сохраняем пустой массив в файл
-    res.json({ success: true, message: "Messages cleared successfully" });
-  } else {
-    res.status(400).json({ success: false, message: "Invalid request" });
-  }
-});
-
-// Проверка активности клиентов
-const interval = setInterval(() => {
-  wss.clients.forEach((ws) => {
-    if (ws.isAlive === false) return ws.terminate();
-    ws.isAlive = false;
-    ws.ping();
-  });
-}, 30000);
-
-wss.on("close", () => {
-  clearInterval(interval);
-});
+  const { cleaning } = req.body
