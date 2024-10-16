@@ -17,7 +17,9 @@ export function useChat() {
       console.log("Fetched messages:", data);
       messagesRef.value = data.map((message: IMessage) => ({
         ...message,
-        text: xorEncryptDecrypt(message.text, encryptionKeyRef.value)
+        text: message.text
+          ? xorEncryptDecrypt(message.text, encryptionKeyRef.value)
+          : ""
       }));
       return messagesRef.value;
     } catch (error) {
@@ -60,6 +62,7 @@ export function useChat() {
   };
 
   function xorEncryptDecrypt(input: string, key: string): string {
+    if (!input || !key) return ""; // Проверка на пустые значения
     let output = "";
     for (let i = 0; i < input.length; i++) {
       output += String.fromCharCode(

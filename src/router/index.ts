@@ -1,23 +1,23 @@
 import { createRouter, createWebHistory } from "vue-router";
-import ChatArea from "@/views/ChatArea.vue";
-import LoginPage from "@/views/LoginPage.vue";
+import LoginPage from "../pages/LoginPage.vue";
+import ChatPage from "../pages/ChatPage.vue";
+
+const routes = [
+  {
+    path: "/",
+    name: "Login",
+    component: LoginPage
+  },
+  {
+    path: "/chat",
+    name: "Chat",
+    component: ChatPage
+  }
+];
 
 const router = createRouter({
-  history: createWebHistory(import.meta.env.BASE_URL),
-  routes: [
-    {
-      path: "/",
-      name: "LoginPage",
-      component: LoginPage,
-      children: [
-        {
-          path: "/ChatArea",
-          name: "ChatArea",
-          component: ChatArea
-        }
-      ]
-    }
-  ]
+  history: createWebHistory(),
+  routes
 });
 
 export default router;

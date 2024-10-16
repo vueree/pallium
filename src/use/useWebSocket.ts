@@ -72,7 +72,7 @@ export function useWebSocket(options: IWebSocketOptions) {
 
   const reconnect = () => {
     if (!reconnectIntervalRef.value) {
-      const interval = 5000 * 2 ** reconnectAttemptsRef.value;
+      const interval = Math.min(5000 * 2 ** reconnectAttemptsRef.value, 30000); // Ограничить до 30 секунд
       reconnectIntervalRef.value = setInterval(() => {
         console.log("Попытка переподключения...");
         connectWebSocket();

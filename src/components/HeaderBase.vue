@@ -2,6 +2,14 @@
 import { ref } from "vue";
 import InputBase from "@/components/atom/InputBase.vue";
 
+interface IProps {
+  removeInput?: boolean;
+}
+
+const props = withDefaults(defineProps<IProps>(), {
+  removeInput: false
+});
+
 const inputPassRef = ref("");
 
 const emit = defineEmits(["update:encryptionKey"]);
@@ -14,6 +22,7 @@ const handleKeyChange = () => {
 <template>
   <header class="flex items-center justify-between w-full mx-auto max-width">
     <InputBase
+      v-show="!removeInput"
       v-model="inputPassRef"
       type="password"
       minWidth="150px"

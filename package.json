@@ -14,10 +14,13 @@
     "lint": "eslint . --ext .vue,.js,.jsx,.cjs,.mjs,.ts,.tsx,.cts,.mts --fix --ignore-path .gitignore"
   },
   "dependencies": {
+    "@nuxt/kit": "^3.13.2",
     "cors": "^2.8.5",
     "express": "^4.21.0",
+    "mongoose": "^8.7.1",
     "pinia": "^2.1.7",
     "socket.io": "^4.8.0",
+    "unicorn-magic": "^0.3.0",
     "vue": "^3.4.29",
     "vue-router": "^4.3.3",
     "ws": "^8.18.0"

@@ -5,7 +5,9 @@ const webSocketStore = useWebSocketStore();
 </script>
 
 <template>
-  <footer :class="[$style.wrapper, 'flex items-center w-full']">
+  <footer
+    :class="[$style.wrapper, 'flex items-center w-full max-width mx-auto']"
+  >
     <p
       :class="
         webSocketStore.isConnected ? $style['cl-green'] : $style['cl-red']

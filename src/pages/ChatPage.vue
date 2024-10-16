@@ -1,19 +1,22 @@
+// chatpage.vue
 <script setup lang="ts">
 import { ref, onMounted, watch, nextTick, onBeforeUnmount } from "vue";
+import { useRoute } from "vue-router";
 import InputBase from "@/components/atom/InputBase.vue";
 import BtnBase from "@/components/atom/BtnBase.vue";
-import LoginPage from "./LoginPage.vue";
 import { useChat } from "@/use/useChat";
 import { useWebSocket } from "@/use/useWebSocket";
 import type { IMessage } from "@/types";
 
+const route = useRoute();
 const { getChatHistory, clearChatHistory, messages: messagesRef } = useChat();
 
 const chatInputRef = ref("");
 const chatAreaRef = ref<HTMLElement | null>(null);
-const usernameRef = ref("User" + Math.floor(Math.random() * 1000));
-const encryptionKeyRef = ref("");
-const showChat = ref(false);
+const usernameRef = ref(
+  route.query.username || "User" + Math.floor(Math.random() * 1000)
+);
+const encryptionKeyRef = ref(route.query.key || "");
 
 const scrollToBottom = () => {
   nextTick(() => {
@@ -49,18 +52,16 @@ const {
 
 const handleSendMessage = () => {
   if (chatInputRef.value.trim() && isConnected.value) {
-    const encryptedText = xorEncryptDecrypt(
-      chatInputRef.value,
-      encryptionKeyRef.value
-    );
     const newMessage: IMessage = {
       id: Date.now(),
-      text: encryptedText,
+      text: chatInputRef.value,
       user: usernameRef.value,
       timestamp: new Date().toISOString()
     };
     sendMessage(newMessage);
+    messagesRef.value.push(newMessage); // Добавляем сообщение сразу, чтобы оно отображалось.
     chatInputRef.value = "";
+    scrollToBottom();
   }
 };
 
@@ -78,6 +79,7 @@ const removeChat = async () => {
 
 onMounted(async () => {
   connectWebSocket();
+  setEncryptionKey(encryptionKeyRef.value); // Устанавливаем ключ шифрования при подключении.
   await getChatHistory();
   scrollToBottom();
 });
@@ -93,12 +95,6 @@ watch(
   },
   { deep: true }
 );
-
-const updateEncryptionKey = (key: string) => {
-  encryptionKeyRef.value = key;
-  setEncryptionKey(key);
-  showChat.value = true;
-};
 
 function xorEncryptDecrypt(input: string, key: string): string {
   let output = "";
@@ -118,54 +114,49 @@ function xorEncryptDecrypt(input: string, key: string): string {
       'flex flex-column w-full h-full mx-auto max-width relative max-height'
     ]"
   >
-    <LoginPage v-if="!showChat" @update:encryptionKey="updateEncryptionKey" />
-    <template v-else>
-      <BtnBase
-        v-show="messagesRef.length > 0"
-        :class="[$style['button-remove'], 'absolute']"
-        targetButton="CleanChat"
-        @click="removeChat"
-      />
+    <BtnBase
+      v-show="messagesRef.length > 0"
+      :class="[$style['button-remove'], 'absolute']"
+      targetButton="CleanChat"
+      @click="removeChat"
+    />
+    <div
+      :class="[$style.chatArea, 'flex flex-column w-full']"
+      ref="chatAreaRef"
+    >
       <div
-        :class="[$style.chatArea, 'flex flex-column w-full']"
-        ref="chatAreaRef"
+        v-for="message in messagesRef"
+        :key="message.id"
+        :class="[
+          $style.message,
+          message.user === usernameRef.value ? $style.ownMessage : ''
+        ]"
       >
-        <div
-          v-for="message in messagesRef"
-          :key="message.id"
-          :class="[
-            $style.message,
-            message.user === usernameRef ? $style.ownMessage : ''
-          ]"
-        >
-          <span :class="$style.messageUser">{{ message.user }}</span>
-          <span :class="$style.messageText">{{
-            xorEncryptDecrypt(message.text, encryptionKeyRef)
-          }}</span>
-          <span :class="$style.messageTime">
-            {{
-              new Date(message.timestamp).toLocaleTimeString() || "Unknown Time"
-            }}
-          </span>
-        </div>
+        <span :class="$style.messageUser">{{ message.user }}</span>
+        <span :class="$style.messageText">{{ message.text }}</span>
+        <span :class="$style.messageTime">
+          {{
+            new Date(message.timestamp).toLocaleTimeString() || "Unknown Time"
+          }}
+        </span>
       </div>
-      <div :class="[$style.inputArea, 'flex']">
-        <InputBase
-          v-model="chatInputRef"
-          class="w-full"
-          type="text"
-          placeholder="Введите сообщение..."
-          width="1200px"
-          @keydown="handleKeydown"
-        >
-          <BtnBase
-            targetButton="SendMessage"
-            label="Отправить"
-            @click="handleSendMessage"
-          />
-        </InputBase>
-      </div>
-    </template>
+    </div>
+    <div :class="[$style.inputArea, 'flex']">
+      <InputBase
+        v-model="chatInputRef"
+        class="w-full"
+        type="text"
+        placeholder="Введите сообщение..."
+        width="1200px"
+        @keydown="handleKeydown"
+      >
+        <BtnBase
+          targetButton="SendMessage"
+          label="Отправить"
+          @click="handleSendMessage"
+        />
+      </InputBase>
+    </div>
   </main>
 </template>
 
