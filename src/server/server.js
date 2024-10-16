@@ -1,14 +1,9 @@
 import express from "express";
 import { createServer } from "http";
-import { WebSocketServer } from "ws"; // Импортируем WebSocketServer из библиотеки ws
+import { WebSocketServer } from "ws";
 import debugModule from "debug";
 import cors from "cors";
-import { fileURLToPath } from "url";
-import { dirname, join } from "path";
-import fs from "fs";
-
-const __filename = fileURLToPath(import.meta.url);
-const __dirname = dirname(__filename);
+import mongoose from "mongoose";
 
 const debug = debugModule("server");
 const app = express();
@@ -19,13 +14,34 @@ const PORT = process.env.PORT || 3000;
 // Настройка CORS
 app.use(
   cors({
-    origin: "http://localhost:5173", // Разрешаем доступ только с этого источника
-    methods: ["GET", "POST", "OPTIONS"], // Указываем разрешенные методы
-    allowedHeaders: ["Content-Type", "Authorization"] // Указываем разрешенные заголовки
+    origin: "http://localhost:5173",
+    methods: ["GET", "POST", "OPTIONS"],
+    allowedHeaders: ["Content-Type", "Authorization"]
   })
 );
 
 app.use(express.json());
+
+// Подключение к MongoDB
+mongoose
+  .connect("mongodb://localhost:27017/messagesDB", {
+    useNewUrlParser: true,
+    useUnifiedTopology: true
+  })
+  .then(() => {
+    console.log("Подключено к MongoDB");
+  })
+  .catch((err) => {
+    console.error("Ошибка подключения к MongoDB:", err);
+  });
+
+// Создание схемы и модели для сообщений
+const messageSchema = new mongoose.Schema({
+  content: String,
+  timestamp: { type: Date, default: Date.now }
+});
+
+const Message = mongoose.model("Message", messageSchema);
 
 // Обработка ошибок
 app.use((err, req, res, next) => {
@@ -41,50 +57,40 @@ server.listen(PORT, () => {
 // Создание WebSocket-сервера
 const wss = new WebSocketServer({ server });
 
-let messages = [];
-
-// Загрузка сообщений из файла
-const loadMessages = () => {
+// Загрузка сообщений из базы данных
+const loadMessages = async () => {
   try {
-    const data = fs.readFileSync(join(__dirname, "messages.json"), "utf8");
-    messages = data ? JSON.parse(data) : [];
+    const messages = await Message.find();
+    return messages;
   } catch (error) {
     console.error("Error loading messages:", error);
-    messages = [];
+    return [];
   }
 };
 
-// Сохранение сообщений в файл
-const saveMessages = () => {
-  try {
-    fs.writeFileSync(
-      join(__dirname, "messages.json"),
-      JSON.stringify(messages)
-    );
-  } catch (error) {
-    console.error("Error saving messages:", error);
-  }
-};
-
-// Загружаем существующие сообщения
-loadMessages();
+// Загружаем существующие сообщения при запуске сервера
+loadMessages().then((messages) => {
+  wss.clients.forEach((client) => {
+    if (client.readyState === client.OPEN) {
+      client.send(JSON.stringify(messages));
+    }
+  });
+});
 
 wss.on("connection", (ws) => {
   console.log("Client connected");
 
-  // Отправка существующих сообщений клиенту при подключении
-  ws.send(JSON.stringify(messages));
-
-  ws.on("message", (message) => {
+  ws.on("message", async (message) => {
     const newMessage = JSON.parse(message);
-    messages.push(newMessage);
-    saveMessages(); // Сохраняем сообщения
+
+    // Сохраняем новое сообщение в базу данных
+    const savedMessage = new Message(newMessage);
+    await savedMessage.save();
 
     // Отправляем сообщение всем клиентам
     wss.clients.forEach((client) => {
       if (client.readyState === client.OPEN) {
-        // Используем client вместо WebSocket
-        client.send(JSON.stringify(newMessage)); // Посылаем новое сообщение всем клиентам
+        client.send(JSON.stringify(newMessage));
       }
     });
   });
@@ -99,17 +105,17 @@ wss.on("connection", (ws) => {
 });
 
 // Serve messages on GET request
-app.get("/getMessages", (req, res) => {
-  res.json(messages); // Возвращаем загруженные сообщения из файла
+app.get("/getMessages", async (req, res) => {
+  const messages = await loadMessages(); // Возвращаем загруженные сообщения из базы данных
+  res.json(messages);
 });
 
 // Метод POST для очистки сообщений
-app.post("/clearMessages", (req, res) => {
+app.post("/clearMessages", async (req, res) => {
   const { cleaning } = req.body;
 
   if (cleaning === true) {
-    messages = []; // Очищаем массив сообщений
-    saveMessages(); // Сохраняем пустой массив в файл
+    await Message.deleteMany(); // Очищаем все сообщения из базы данных
     res.json({ success: true, message: "Messages cleared successfully" });
   } else {
     res.status(400).json({ success: false, message: "Invalid request" });

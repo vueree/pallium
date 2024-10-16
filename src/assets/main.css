@@ -52,6 +52,10 @@ input {
   max-width: 1200px;
 }
 
+.max-height {
+  height: calc(100vh - 120px);
+}
+
 .w-full {
   width: 100%;
 }
@@ -61,10 +65,10 @@ input {
   opacity: 25%;
 }
 
-.cl_red {
-  color: red;
+.relative {
+  position: relative;
 }
 
-.cl_green {
-  color: green;
+.absolute {
+  position: absolute;
 }

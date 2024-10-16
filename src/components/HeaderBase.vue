@@ -1,18 +1,33 @@
 <script setup lang="ts">
 import { ref } from "vue";
-import InputBase from "./atom/InputBase.vue";
+import InputBase from "@/components/atom/InputBase.vue";
 
-const inputValueRef = ref("");
+interface IProps {
+  removeInput?: boolean;
+}
+
+const props = withDefaults(defineProps<IProps>(), {
+  removeInput: false
+});
+
+const inputPassRef = ref("");
+
+const emit = defineEmits(["update:encryptionKey"]);
+
+const handleKeyChange = () => {
+  emit("update:encryptionKey", inputPassRef.value);
+};
 </script>
 
 <template>
   <header class="flex items-center justify-between w-full mx-auto max-width">
-    <h3>Добро пожаловать в теневой чат</h3>
     <InputBase
-      :modelValue="inputValueRef"
+      v-show="!removeInput"
+      v-model="inputPassRef"
       type="password"
       minWidth="150px"
       placeholder="Введите шифр..."
+      @input="handleKeyChange"
     />
   </header>
 </template>

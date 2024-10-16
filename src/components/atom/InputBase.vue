@@ -9,6 +9,8 @@ interface Props {
   required?: boolean;
   placeholder?: string;
   width?: string;
+  isBorder?: boolean;
+  isLogin?: boolean;
 }
 
 const props = withDefaults(defineProps<Props>(), {
@@ -17,7 +19,8 @@ const props = withDefaults(defineProps<Props>(), {
   id: "",
   placeholder: "",
   required: false,
-  width: "200px"
+  width: "200px",
+  isLogin: false
 });
 
 const emit = defineEmits(["update:modelValue"]);
@@ -33,11 +36,19 @@ const inputId = computed(
 </script>
 
 <template>
-  <div :class="[$style['input-wrapper'], 'flex items-center relative']">
+  <div
+    :class="[
+      $style['input-wrapper'],
+      {
+        [$style['is-border']]: isBorder
+      },
+      'flex items-center relative'
+    ]"
+  >
     <input
       v-model="inputValue"
-      :style="{ width: width, height: '26px' }"
       :class="$style.input"
+      :style="{ width: width, height: '26px' }"
       :type="type"
       :id="inputId"
       :name="name"
@@ -52,10 +63,11 @@ const inputId = computed(
 .input-wrapper {
   position: relative;
   min-height: 60px;
+  height: "26px";
 }
 
 .input {
-  padding: 8px 0;
+  padding: 8px;
   border: none;
 }
 
@@ -65,5 +77,10 @@ const inputId = computed(
 
 .slot {
   margin-top: auto;
+}
+
+.is-border {
+  border: 1px solid #8189b7;
+  border-radius: 10px;
 }
 </style>
