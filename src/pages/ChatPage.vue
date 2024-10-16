@@ -4,13 +4,14 @@ import InputBase from "@/components/atom/InputBase.vue";
 import BtnBase from "@/components/atom/BtnBase.vue";
 import { useWebSocketStore } from "@/stores/useWebSocketStore";
 import type { IMessage } from "@/types";
+import { fetchGetMessages } from "@/use/fetchChat";
 
 const chatInputRef = ref("");
-const messagesRef = ref<IMessage[]>([]);
 const chatAreaRef = ref<HTMLElement | null>(null);
 const socketRef = ref<WebSocket | null>(null);
-const usernameRef = ref("User" + Math.floor(Math.random() * 1000));
 const isConnectedRef = ref(false);
+const messagesRef = ref([]);
+const usernameRef = ref("");
 
 const webSocketStore = useWebSocketStore(); // Используем store
 
@@ -46,11 +47,45 @@ const connectWebSocket = () => {
   };
 };
 
-const reloadWebSocket = () => {
-  if (socketRef.value) {
-    socketRef.value.close();
+// const getChatHistory = async () => {
+//   try {
+//     const response = await fetch("http://localhost:3000/getMessages");
+//     if (!response.ok) {
+//       throw new Error(`HTTP error! status: ${response.status}`);
+//     }
+//     const data = await response.json();
+//     console.log("Fetched messages:", data);
+//     messagesRef.value = data;
+//     scrollToBottom();
+//   } catch (error) {
+//     console.error("Error fetching messages:", error);
+//   }
+// };
+
+const clearChatHistory = async () => {
+  try {
+    const response = await fetch("http://localhost:3000/clearMessages", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json"
+      },
+      body: JSON.stringify({ cleaning: true })
+    });
+
+    if (!response.ok) {
+      throw new Error(`HTTP error! status: ${response.status}`);
+    }
+
+    const data = await response.json();
+    if (data.success) {
+      console.log("Chat history cleared successfully");
+      messagesRef.value = []; // Очищаем сообщения на фронте
+    } else {
+      console.error("Failed to clear chat history:", data.message);
+    }
+  } catch (error) {
+    console.error("Error clearing chat history:", error);
   }
-  connectWebSocket();
 };
 
 const sendMessage = () => {
@@ -73,47 +108,6 @@ const handleKeydown = (event: KeyboardEvent) => {
   }
 };
 
-const getChatHistory = async () => {
-  try {
-    const response = await fetch("http://localhost:3000/getMessages");
-    if (!response.ok) {
-      throw new Error(`HTTP error! status: ${response.status}`);
-    }
-    const data = await response.json();
-    console.log("Fetched messages:", data);
-    messagesRef.value = data;
-    scrollToBottom();
-  } catch (error) {
-    console.error("Error fetching messages:", error);
-  }
-};
-
-const clearChatHistory = async () => {
-  try {
-    const response = await fetch("http://localhost:3000/clearMessages", {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json"
-      },
-      body: JSON.stringify({ cleaning: true }) // Отправляем поле cleaning: true
-    });
-
-    if (!response.ok) {
-      throw new Error(`HTTP error! status: ${response.status}`);
-    }
-
-    const data = await response.json();
-    if (data.success) {
-      console.log("Chat history cleared successfully");
-      messagesRef.value = []; // Очищаем сообщения на фронте
-    } else {
-      console.error("Failed to clear chat history:", data.message);
-    }
-  } catch (error) {
-    console.error("Error clearing chat history:", error);
-  }
-};
-
 const removeChat = () => {
   messagesRef.value = [];
   clearChatHistory();
@@ -121,7 +115,7 @@ const removeChat = () => {
 
 onMounted(() => {
   connectWebSocket();
-  getChatHistory();
+  fetchGetMessages();
 });
 
 onUnmounted(() => {
@@ -149,23 +143,11 @@ watch(
     ]"
   >
     <BtnBase
-      :class="$style['button-remove']"
-      label="Clear"
+      v-show="messagesRef.length > 0"
+      :class="[$style['button-remove'], 'absolute']"
+      targetButton="CleanChat"
       @click="removeChat"
     />
-    <!-- <div>
-      <span>WebSockets:</span>
-      <span :class="isConnectedRef ? 'cl_green' : 'cl_red'">{{
-        isConnectedRef ? "Connected" : "Disconnected"
-      }}</span>
-    </div> -->
-    <div>
-      <BtnBase
-        label="Reconnect WebSocket"
-        @click="reloadWebSocket"
-        :class="$style['button-reconnect']"
-      />
-    </div>
     <div
       :class="[$style.chatArea, 'flex flex-column w-full']"
       ref="chatAreaRef"
@@ -247,19 +229,8 @@ watch(
 }
 
 .button-remove {
-  position: absolute;
-  right: -200px;
   top: -50px;
-}
-
-.button-reconnect {
-  margin: 10px; /* Отступ между кнопками */
-  background-color: #007bff; /* Цвет фона кнопки */
-  color: white; /* Цвет текста */
-  border: none; /* Убираем обводку */
-  padding: 10px 15px; /* Отступы внутри кнопки */
-  border-radius: 5px; /* Закругленные углы */
-  cursor: pointer; /* Указатель при наведении */
-  transition: background-color 0.3s; /* Анимация при наведении */
+  right: 0;
+  opacity: 50%;
 }
 </style>

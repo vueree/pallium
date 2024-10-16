@@ -1,92 +1,143 @@
 import express from "express";
+import connectDB from "./db.js";
 import { createServer } from "http";
-import { WebSocketServer } from "ws"; // Импортируем WebSocketServer из библиотеки ws
-import debugModule from "debug";
+import { WebSocketServer } from "ws";
+import mongoose from "mongoose";
 import cors from "cors";
-import { fileURLToPath } from "url";
-import { dirname, join } from "path";
-import fs from "fs";
+import bcrypt from "bcryptjs"; // Импортируем bcrypt
+import Message from "./models/message.js"; // Импортируем модель сообщения
 
-const __filename = fileURLToPath(import.meta.url);
-const __dirname = dirname(__filename);
-
-const debug = debugModule("server");
 const app = express();
 const server = createServer(app);
-
 const PORT = process.env.PORT || 3000;
 
 // Настройка CORS
 app.use(
   cors({
-    origin: "http://localhost:5173", // Разрешаем доступ только с этого источника
-    methods: ["GET", "POST", "OPTIONS"], // Указываем разрешенные методы
-    allowedHeaders: ["Content-Type", "Authorization"] // Указываем разрешенные заголовки
+    origin: "http://localhost:5173",
+    methods: ["GET", "POST", "OPTIONS"],
+    allowedHeaders: ["Content-Type", "Authorization"]
   })
 );
 
-app.use(express.json());
+app.use(express.json()); // Не забудьте добавить этот middleware
+connectDB();
+// Определение схемы пользователя и модели
+const userSchema = new mongoose.Schema({
+  username: { type: String, required: true, unique: true },
+  password: { type: String, required: true }
+});
+const User = mongoose.model("User", userSchema);
 
-// Обработка ошибок
-app.use((err, req, res, next) => {
-  console.error(err.stack);
-  res.status(500).json({ error: "Что-то пошло не так!" });
+// Обработчик маршрута регистрации
+app.post("/register", async (req, res) => {
+  console.log("Request body:", req.body);
+  const { username, password } = req.body;
+
+  console.log("Received registration request:", { username, password });
+
+  try {
+    // Проверка, существует ли пользователь с таким именем
+    const existingUser = await User.findOne({ username });
+    if (existingUser) {
+      console.log("User already exists:", username);
+      return res.status(400).json({ error: "User already exists" });
+    }
+
+    // Хэширование пароля перед сохранением
+    const hashedPassword = await bcrypt.hash(password, 10);
+
+    // Создание нового пользователя
+    const newUser = new User({ username, password: hashedPassword });
+    await newUser.save();
+
+    console.log("User created successfully:", newUser);
+    res
+      .status(201)
+      .json({ message: "User registered successfully", user: newUser });
+  } catch (error) {
+    console.error("Error creating user:", error);
+    res.status(500).json({ error: "Error creating user" });
+  }
 });
 
-// Запуск сервера
-server.listen(PORT, () => {
-  console.log(`Сервер запущен на http://localhost:${PORT}`);
+// Маршрут для получения всех сообщений
+app.get("/getMessages", async (req, res) => {
+  try {
+    const messages = await Message.find().sort({ timestamp: -1 }); // Получение сообщений с сортировкой по времени
+    res.json(messages);
+  } catch (error) {
+    console.error("Error fetching messages:", error);
+    res.status(500).json({ error: "Error fetching messages" });
+  }
+});
+
+// Маршрут для отправки нового сообщения
+app.post("/messages", async (req, res) => {
+  const { user, text } = req.body;
+
+  try {
+    const newMessage = new Message({ user, text });
+    await newMessage.save();
+    res.status(201).json(newMessage);
+  } catch (error) {
+    res.status(500).json({ error: "Error sending message" });
+  }
+});
+
+// Маршрут для очистки всех сообщений
+app.post("/clearMessages", (req, res) => {
+  const { cleaning } = req.body;
+
+  if (cleaning === true) {
+    Message.deleteMany({})
+      .then(() => {
+        res.json({ success: true, message: "Messages cleared successfully" });
+      })
+      .catch((err) => {
+        res
+          .status(500)
+          .json({ success: false, message: "Failed to clear messages" });
+      });
+  } else {
+    res.status(400).json({ success: false, message: "Invalid request" });
+  }
 });
 
 // Создание WebSocket-сервера
 const wss = new WebSocketServer({ server });
 
-let messages = [];
-
-// Загрузка сообщений из файла
-const loadMessages = () => {
-  try {
-    const data = fs.readFileSync(join(__dirname, "messages.json"), "utf8");
-    messages = data ? JSON.parse(data) : [];
-  } catch (error) {
-    console.error("Error loading messages:", error);
-    messages = [];
-  }
-};
-
-// Сохранение сообщений в файл
-const saveMessages = () => {
-  try {
-    fs.writeFileSync(
-      join(__dirname, "messages.json"),
-      JSON.stringify(messages)
-    );
-  } catch (error) {
-    console.error("Error saving messages:", error);
-  }
-};
-
-// Загружаем существующие сообщения
-loadMessages();
-
 wss.on("connection", (ws) => {
   console.log("Client connected");
 
   // Отправка существующих сообщений клиенту при подключении
-  ws.send(JSON.stringify(messages));
+  Message.find().then((messages) => {
+    ws.send(JSON.stringify(messages));
+  });
 
-  ws.on("message", (message) => {
-    const newMessage = JSON.parse(message);
-    messages.push(newMessage);
-    saveMessages(); // Сохраняем сообщения
+  ws.on("message", async (message) => {
+    try {
+      const newMessage = JSON.parse(message);
+      const messageDoc = new Message(newMessage);
 
-    // Отправляем сообщение всем клиентам
-    wss.clients.forEach((client) => {
-      if (client.readyState === client.OPEN) {
-        // Используем client вместо WebSocket
-        client.send(JSON.stringify(newMessage)); // Посылаем новое сообщение всем клиентам
-      }
-    });
+      // Сохраняем новое сообщение в базу данных
+      await messageDoc.save();
+
+      // Отправляем новое сообщение всем клиентам
+      const messageToSend = {
+        user: newMessage.user,
+        text: newMessage.text,
+        timestamp: new Date()
+      };
+
+      wss.clients.forEach((client) => {
+        if (client.readyState === WebSocket.OPEN) {
+          client.send(JSON.stringify(messageToSend));
+        }
+      });
+    } catch (error) {
+      console.error("Error processing message:", error);
+    }
   });
 
   ws.on("close", () => {
@@ -96,24 +147,6 @@ wss.on("connection", (ws) => {
   ws.on("error", (error) => {
     console.error("WebSocket error:", error);
   });
-});
-
-// Serve messages on GET request
-app.get("/getMessages", (req, res) => {
-  res.json(messages); // Возвращаем загруженные сообщения из файла
-});
-
-// Метод POST для очистки сообщений
-app.post("/clearMessages", (req, res) => {
-  const { cleaning } = req.body;
-
-  if (cleaning === true) {
-    messages = []; // Очищаем массив сообщений
-    saveMessages(); // Сохраняем пустой массив в файл
-    res.json({ success: true, message: "Messages cleared successfully" });
-  } else {
-    res.status(400).json({ success: false, message: "Invalid request" });
-  }
 });
 
 // Проверка активности клиентов
@@ -127,4 +160,9 @@ const interval = setInterval(() => {
 
 wss.on("close", () => {
   clearInterval(interval);
+});
+
+// Запуск сервера
+app.listen(PORT, () => {
+  console.log(`Server running on http://localhost:${PORT}`);
 });
