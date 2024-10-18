@@ -13,7 +13,7 @@ const isConnectedRef = ref(false);
 const messagesRef = ref([]);
 const usernameRef = ref("");
 
-const webSocketStore = useWebSocketStore(); // Используем store
+const webSocketStore = useWebSocketStore();
 
 const scrollToBottom = () => {
   nextTick(() => {
@@ -47,7 +47,7 @@ const connectWebSocket = () => {
   };
 };
 
-// const getChatHistory = async () => {
+const getChatHistory = async () => {
 //   try {
 //     const response = await fetch("http://localhost:3000/getMessages");
 //     if (!response.ok) {
