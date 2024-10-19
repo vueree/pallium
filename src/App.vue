@@ -6,6 +6,8 @@ import FooterBase from "./components/FooterBase.vue";
 
 <template>
   <HeaderBase />
-  <router-view />
+  <div class="cl_dived" />
+  <router-view class="mx-auto max-width max-height" />
+  <div class="cl_dived" />
   <FooterBase />
 </template>

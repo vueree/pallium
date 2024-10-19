@@ -1,47 +1,30 @@
 <script setup lang="ts">
 import { ref } from "vue";
-import { useRouter } from "vue-router";
 import InputBase from "@/components/atom/InputBase.vue";
 import BtnBase from "@/components/atom/BtnBase.vue";
-import axios from "axios";
+import { loginUser } from "@/use/fetchChat";
+import { useRouter } from "vue-router";
 
 const router = useRouter();
+
 const inputUsernameRef = ref("");
 const inputPasswordRef = ref("");
 
-const handleSubmit = async () => {
-  try {
-    const response = await axios.post(
-      "http://localhost:3000/register",
-      {
-        username: inputUsernameRef.value,
-        password: inputPasswordRef.value
-      },
-      {
-        headers: {
-          "Content-Type": "application/json"
-        }
-      }
-    );
-    console.log("Registration successful:", response.data);
-    router.push({ name: "Chat", query: { username: inputUsernameRef.value } });
-    // Перенаправление пользователя или другое действие после успешной регистрации
-  } catch (error) {
-    console.error("Error during registration:", error);
-    alert(
-      `Ошибка регистрации: ${error.response?.data?.error || error.message}`
-    );
-  }
+const handleLogin = async () => {
+  const username = inputUsernameRef.value;
+  const password = inputPasswordRef.value;
+
+  inputUsernameRef.value = "";
+  inputPasswordRef.value = "";
+
+  await loginUser(username, password, router);
 };
 </script>
 
 <template>
   <main>
-    <form
-      @submit.prevent="handleSubmit"
-      class="max-height flex flex-column items-center"
-    >
-      <h1 :class="$style.title">Введите имя пользователя</h1>
+    <form @submit.prevent="handleLogin" class="flex flex-column items-center">
+      <h3 :class="$style.title">Введите имя пользователя</h3>
       <InputBase
         v-model="inputUsernameRef"
         :class="$style.input"
@@ -54,14 +37,20 @@ const handleSubmit = async () => {
         :class="$style.input"
         type="password"
         isBorder
-        placeholder="Код шифрования"
+        placeholder="Пароль"
       />
       <BtnBase
-        type="submit"
         :class="$style['submit-button']"
+        type="submit"
         label="Начать чат"
         isLogin
       />
+      <a
+        :href="$router.resolve({ name: 'Registration' }).href"
+        :class="$style['register-link']"
+      >
+        Регистрация
+      </a>
     </form>
   </main>
 </template>
@@ -70,6 +59,13 @@ const handleSubmit = async () => {
 .title {
   margin-top: 140px;
   font-size: 24px;
+}
+
+.register-link {
+  padding: 16px 8px;
+  border: 1px solid black;
+  margin-top: 12px;
+  cursor: pointer;
 }
 
 .input {

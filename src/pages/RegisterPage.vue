@@ -1,38 +1,80 @@
 <script setup>
 import { ref } from "vue";
-import axios from "axios";
+import InputBase from "@/components/atom/InputBase.vue";
+import BtnBase from "@/components/atom/BtnBase.vue";
+import { registerUser } from "@/use/fetchChat";
+import { useRouter } from "vue-router";
 
-const username = ref("");
-const password = ref("");
+const router = useRouter();
+
+const inputUsernameRef = ref("");
+const inputPasswordRef = ref("");
+const inputEncryptionKeyRef = ref("");
 const errorMessage = ref("");
 
 const handleRegister = async () => {
-  try {
-    await axios.post("http://localhost:3000/register", {
-      username: username.value,
-      password: password.value
-    });
-    // Перенаправить пользователя на страницу входа
-  } catch (error) {
-    errorMessage.value = error.response.data.error || "Registration failed";
-  }
+  const username = inputUsernameRef.value;
+  const password = inputPasswordRef.value;
+  const encryptionKey = inputEncryptionKeyRef.value;
+
+  inputUsernameRef.value = "";
+  inputPasswordRef.value = "";
+  inputEncryptionKeyRef.value = "";
+
+  await registerUser(username, password, encryptionKey, router);
 };
 </script>
 
 <template>
-  <div>
-    <h1>Register</h1>
-    <form @submit.prevent="handleRegister">
-      <div>
-        <label for="username">Username:</label>
-        <input type="text" v-model="username" id="username" required />
-      </div>
-      <div>
-        <label for="password">Password:</label>
-        <input type="password" v-model="password" id="password" required />
-      </div>
-      <button type="submit">Register</button>
-    </form>
+  <form class="flex flex-column items-center" @submit.prevent="handleRegister">
+    <h3 :class="$style.title">Регистрация</h3>
+    <InputBase
+      v-model="inputUsernameRef"
+      :class="$style.input"
+      id="username"
+      type="text"
+      isBorder
+      placeholder="Имя пользователя"
+    />
+    <InputBase
+      v-model="inputPasswordRef"
+      :class="$style.input"
+      id="password"
+      type="password"
+      isBorder
+      placeholder="Пароль"
+    />
+    <InputBase
+      v-model="inputEncryptionKeyRef"
+      :class="$style.input"
+      id="encryptionKey"
+      type="password"
+      isBorder
+      placeholder="Код шифрования"
+    />
+    <BtnBase
+      :class="$style['submit-button']"
+      type="submit"
+      label="Регистрация пользователя"
+      isLogin
+    />
     <p v-if="errorMessage">{{ errorMessage }}</p>
-  </div>
+  </form>
 </template>
+
+<style module>
+.title {
+  margin-top: 140px;
+  font-size: 24px;
+}
+
+.input {
+  margin-top: 20px;
+}
+
+.submit-button {
+  margin-top: 20px;
+  height: 50px;
+  width: 200px;
+}
+</style>

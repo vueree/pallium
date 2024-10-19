@@ -10,7 +10,7 @@ const chatInputRef = ref("");
 const chatAreaRef = ref<HTMLElement | null>(null);
 const socketRef = ref<WebSocket | null>(null);
 const isConnectedRef = ref(false);
-const messagesRef = ref([]);
+const messagesRef = ref<IMessage[]>([]);
 const usernameRef = ref("");
 
 const webSocketStore = useWebSocketStore();
@@ -47,21 +47,6 @@ const connectWebSocket = () => {
   };
 };
 
-const getChatHistory = async () => {
-//   try {
-//     const response = await fetch("http://localhost:3000/getMessages");
-//     if (!response.ok) {
-//       throw new Error(`HTTP error! status: ${response.status}`);
-//     }
-//     const data = await response.json();
-//     console.log("Fetched messages:", data);
-//     messagesRef.value = data;
-//     scrollToBottom();
-//   } catch (error) {
-//     console.error("Error fetching messages:", error);
-//   }
-// };
-
 const clearChatHistory = async () => {
   try {
     const response = await fetch("http://localhost:3000/clearMessages", {
@@ -79,7 +64,7 @@ const clearChatHistory = async () => {
     const data = await response.json();
     if (data.success) {
       console.log("Chat history cleared successfully");
-      messagesRef.value = []; // Очищаем сообщения на фронте
+      messagesRef.value = []; // Clear messages on the front end
     } else {
       console.error("Failed to clear chat history:", data.message);
     }
@@ -136,12 +121,7 @@ watch(
 </script>
 
 <template>
-  <main
-    :class="[
-      $style.wrapper,
-      'flex flex-column w-full h-full mx-auto max-width'
-    ]"
-  >
+  <main :class="[$style.wrapper, 'flex flex-column w-full h-full']">
     <BtnBase
       v-show="messagesRef.length > 0"
       :class="[$style['button-remove'], 'absolute']"
@@ -185,7 +165,6 @@ watch(
 <style module>
 .wrapper {
   position: relative;
-  height: calc(100vh - 120px);
 }
 
 .chatArea {

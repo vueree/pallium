@@ -76,3 +76,7 @@ input {
 .text-center {
   text-align: center;
 }
+
+.max-height {
+  height: calc(100vh - 130px);
+}
