@@ -2,18 +2,25 @@
 import { ref, onMounted, watch, nextTick, onUnmounted } from "vue";
 import InputBase from "@/components/atom/InputBase.vue";
 import BtnBase from "@/components/atom/BtnBase.vue";
-import { useWebSocketStore } from "@/stores/useWebSocketStore";
 import type { IMessage } from "@/types";
-import { fetchGetMessages } from "@/use/fetchChat";
+import {
+  getMessages,
+  sendMessage as sendChatMessage,
+  clearMessages
+} from "@/use/fetchChat";
 
 const chatInputRef = ref("");
 const chatAreaRef = ref<HTMLElement | null>(null);
-const socketRef = ref<WebSocket | null>(null);
-const isConnectedRef = ref(false);
 const messagesRef = ref<IMessage[]>([]);
 const usernameRef = ref("");
 
-const webSocketStore = useWebSocketStore();
+const getToken = () => {
+  return localStorage.getItem("auth_token");
+};
+
+const logout = () => {
+  localStorage.removeItem("auth_token");
+};
 
 const scrollToBottom = () => {
   nextTick(() => {
@@ -23,92 +30,45 @@ const scrollToBottom = () => {
   });
 };
 
-const connectWebSocket = () => {
-  socketRef.value = new WebSocket("ws://localhost:3000");
-
-  socketRef.value.onopen = () => {
-    isConnectedRef.value = true;
-    webSocketStore.setConnectionStatus(true);
-  };
-
-  socketRef.value.onmessage = (event) => {
-    const newMessage: IMessage = JSON.parse(event.data);
-    messagesRef.value.push(newMessage);
-    scrollToBottom();
-  };
-
-  socketRef.value.onerror = (error) => {
-    console.error("WebSocket error:", error);
-  };
-
-  socketRef.value.onclose = () => {
-    webSocketStore.setConnectionStatus(false);
-    isConnectedRef.value = false;
-  };
-};
-
-const clearChatHistory = async () => {
-  try {
-    const response = await fetch("http://localhost:3000/clearMessages", {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json"
-      },
-      body: JSON.stringify({ cleaning: true })
-    });
-
-    if (!response.ok) {
-      throw new Error(`HTTP error! status: ${response.status}`);
-    }
-
-    const data = await response.json();
-    if (data.success) {
-      console.log("Chat history cleared successfully");
-      messagesRef.value = []; // Clear messages on the front end
-    } else {
-      console.error("Failed to clear chat history:", data.message);
-    }
-  } catch (error) {
-    console.error("Error clearing chat history:", error);
-  }
-};
-
-const sendMessage = () => {
-  if (chatInputRef.value.trim() && socketRef.value && isConnectedRef.value) {
-    const newMessage: IMessage = {
-      id: Date.now(),
-      text: chatInputRef.value,
-      user: usernameRef.value,
-      timestamp: new Date().toISOString()
-    };
-    socketRef.value.send(JSON.stringify(newMessage));
-    chatInputRef.value = "";
-  }
-};
-
-const handleKeydown = (event: KeyboardEvent) => {
+const handleKeydown = async (event: KeyboardEvent) => {
   if (event.key === "Enter" && !event.shiftKey) {
     event.preventDefault();
-    sendMessage();
+    // Проверка на пустое сообщение
+    if (chatInputRef.value.trim()) {
+      try {
+        const newMessage = await sendChatMessage(chatInputRef.value); // Передаем контент сообщения
+        messagesRef.value.push(newMessage); // Добавляем сообщение в массив
+        chatInputRef.value = "";
+        chatInputRef.value = ""; // Очищаем поле ввода после отправки
+      } catch (error) {
+        console.error(error.message);
+      }
+    }
   }
 };
 
 const removeChat = () => {
   messagesRef.value = [];
-  clearChatHistory();
+  clearMessages();
 };
 
 onMounted(() => {
-  connectWebSocket();
-  fetchGetMessages();
-});
-
-onUnmounted(() => {
-  if (socketRef.value) {
-    console.log("Closing WebSocket connection");
-    socketRef.value.close();
+  const token = getToken();
+  if (token) {
+    getMessages()
+      .then((messages) => {
+        messagesRef.value = messages; // Store messages in the reactive variable
+        console.log("✌️messagesRef.value --->", messagesRef.value);
+      })
+      .catch((error) => {
+        console.error(error.message);
+      });
+  } else {
+    console.error("User is not logged in. Please log in to view messages.");
   }
 });
+
+onUnmounted(() => logout());
 
 watch(
   messagesRef,
@@ -137,11 +97,13 @@ watch(
         :key="message.id"
         :class="[
           $style.message,
-          message.user === usernameRef ? $style.ownMessage : ''
+          message.sender?.username === usernameRef ? $style.ownMessage : ''
         ]"
       >
-        <span :class="$style.messageUser">{{ message.user }}</span>
-        <span :class="$style.messageText">{{ message.text }}</span>
+        <span :class="$style.messageUser">{{
+          message.sender?.username || "Unknown"
+        }}</span>
+        <span :class="$style.messageText">{{ message.content }}</span>
         <span :class="$style.messageTime">{{
           new Date(message.timestamp).toLocaleTimeString()
         }}</span>
@@ -156,7 +118,7 @@ watch(
         width="1200px"
         @keydown="handleKeydown"
       >
-        <BtnBase @click="sendMessage" label="Send" />
+        <BtnBase @click="sendChatMessage(chatInputRef)" label="Send" />
       </InputBase>
     </div>
   </main>
