@@ -9,19 +9,16 @@ const router = useRouter();
 
 const inputUsernameRef = ref("");
 const inputPasswordRef = ref("");
-const inputEncryptionKeyRef = ref("");
 const errorMessage = ref("");
 
 const handleRegister = async () => {
   const username = inputUsernameRef.value;
   const password = inputPasswordRef.value;
-  const encryptionKey = inputEncryptionKeyRef.value;
 
   inputUsernameRef.value = "";
   inputPasswordRef.value = "";
-  inputEncryptionKeyRef.value = "";
 
-  await registerUser(username, password, encryptionKey, router);
+  await registerUser(username, password, router);
 };
 </script>
 
@@ -44,14 +41,14 @@ const handleRegister = async () => {
       isBorder
       placeholder="Пароль"
     />
-    <InputBase
+    <!-- <InputBase
       v-model="inputEncryptionKeyRef"
       :class="$style.input"
       id="encryptionKey"
       type="password"
       isBorder
       placeholder="Код шифрования"
-    />
+    /> -->
     <BtnBase
       :class="$style['submit-button']"
       type="submit"
