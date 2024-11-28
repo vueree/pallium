@@ -1,27 +1,25 @@
+<!-- ChatPage.vue -->
 <script setup lang="ts">
 import { ref, onMounted, onUnmounted, nextTick, watch } from "vue";
 import InputBase from "@/components/atom/InputBase.vue";
 import BtnBase from "@/components/atom/BtnBase.vue";
-import type { IMessage } from "@/types";
+// import type { IMessage } from "@/types";
 import {
   getMessages,
   useMessages,
   sendMessage as sendChatMessage,
   clearMessages
 } from "@/use/fetchChat";
-import {
-  initializeSocket,
-  disconnectSocket,
-  getSocket
-} from "@/use/useWebSocket";
+
+import { useWebSocketStore } from "@/stores/webSockets.store";
 import Cookies from "js-cookie";
 
 const chatInputRef = ref("");
-const chatAreaRef = ref<HTMLElement | null>(null);
 const usernameRef = ref("");
 const messagesRef = useMessages();
 const token = Cookies.get("auth_token");
-const socket = getSocket();
+const webSocketStore = useWebSocketStore();
+const chatAreaRef = ref<HTMLElement | null>(null);
 
 const scrollToBottom = () => {
   nextTick(() => {
@@ -31,57 +29,38 @@ const scrollToBottom = () => {
   });
 };
 
-// const sendMessage = async () => {
-//   const message = chatInputRef.value.trim();
-//   if (message) {
-//     try {
-//       const newMessage = await sendChatMessage(message); // Отправка сообщения
-//       socket?.emit("new_message", newMessage); // Отправка через сокет
-//       chatInputRef.value = ""; // Очистка поля ввода
-//       scrollToBottom();
-//     } catch (error) {
-//       console.error("Ошибка при отправке сообщения:", error.message);
-//     }
-//   }
-// };
-
-// const handleKeydown = async (event: KeyboardEvent) => {
-//   if (event.key === "Enter" && !event.shiftKey) {
-//     event.preventDefault();
-//     await sendMessage(); // Используем новую функцию sendMessage
-//   }
-// };
-
 const sendMessage = async () => {
   const message = chatInputRef.value.trim();
   if (message) {
-    const newMessage = await sendChatMessage(message);
-    socket?.emit("new_message", newMessage); // Отправка через сокет
-
-    chatInputRef.value = "";
-    scrollToBottom();
-  } else {
-    console.log("Ошибка при отправке сообщения");
+    try {
+      const newMessage = await sendChatMessage(message);
+      chatInputRef.value = "";
+      scrollToBottom();
+      // Включаем имя пользователя при добавлении нового сообщения
+      messagesRef.value.push({
+        ...newMessage,
+        sender: {
+          username: usernameRef.value // Локальное имя пользователя
+        }
+      });
+    } catch (error) {
+      console.error("Ошибка при отправке сообщения:", error);
+    }
   }
 };
 
 const handleKeydown = async (event: KeyboardEvent) => {
   if (event.key === "Enter" && !event.shiftKey) {
     event.preventDefault();
-    const message = chatInputRef.value.trim();
-    if (message) {
-      await sendChatMessage(message);
-      chatInputRef.value = ""; // Очистка поля ввода
-    }
+    await sendMessage();
   }
 };
 
 const removeChat = async () => {
   try {
     if (token) {
-      await clearMessages(token); // Очистка сообщений
-      messagesRef.value = []; // Очистка списка сообщений
-      socket?.emit("clear_messages"); // Отправка события на очистку сообщений
+      await clearMessages(token);
+      messagesRef.value = [];
     }
   } catch (error) {
     console.error("Ошибка при очистке чата:", error);
@@ -90,21 +69,27 @@ const removeChat = async () => {
 
 onMounted(async () => {
   if (token) {
-    await getMessages(token); // Передаем токен и ждем результата
-    console.log("Сообщения после получения:", messagesRef.value); // Проверка сообщений
-    scrollToBottom();
-    initializeSocket(token);
-    console.log("Сообщения после получения:", messagesRef.value);
-    socket?.on("message", (data: IMessage) => {
-      messagesRef.value.push(data); // Обработка входящих сообщений
+    try {
+      await getMessages(token);
+      webSocketStore.connect(token);
       scrollToBottom();
-    });
+    } catch (error) {
+      console.error("Ошибка при инициализации чата:", error);
+    }
   }
 });
 
 onUnmounted(() => {
-  disconnectSocket();
+  webSocketStore.disconnect();
 });
+
+watch(
+  () => webSocketStore.messages,
+  () => {
+    scrollToBottom();
+  },
+  { deep: true }
+);
 
 watch(
   messagesRef,
@@ -124,8 +109,8 @@ watch(
       @click="removeChat()"
     />
     <div
-      :class="[$style.chatArea, 'flex flex-column w-full']"
       ref="chatAreaRef"
+      :class="[$style.chatArea, 'flex flex-column w-full']"
     >
       <div
         v-for="message in messagesRef"
@@ -136,7 +121,7 @@ watch(
         ]"
       >
         <span :class="$style.messageUser">{{
-          message.sender?.username || "Unknown"
+          message.username || `ID: ${message.senderId}`
         }}</span>
         <span :class="$style.messageText">{{ message.content }}</span>
         <span :class="$style.messageTime">{{
@@ -153,7 +138,7 @@ watch(
         width="1200px"
         @keydown="handleKeydown"
       >
-        <BtnBase @click="sendChatMessage(chatInputRef)" label="Send" />
+        <BtnBase @click="sendMessage" label="Send" />
       </InputBase>
     </div>
   </main>

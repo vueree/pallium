@@ -1,46 +1,48 @@
+import { ref } from "vue";
 import { io, Socket } from "socket.io-client";
+import type { IMessage } from "../types";
 
-const API_URL = "http://localhost:3000";
-let socket: Socket | null = null;
+const socket = ref<Socket | null>(null);
+const isConnected = ref(false);
 
 export const initializeSocket = (token: string) => {
-  if (!socket) {
-    socket = io(`${API_URL}/chat`, {
-      auth: { token }
-    });
+  socket.value = io("http://localhost:3000/chat", {
+    auth: { token },
+    reconnection: true,
+    reconnectionDelay: 2000,
+    reconnectionAttempts: Infinity
+  });
 
-    socket.on("connect", () => {
-      console.log("Socket connected:", socket?.id);
-    });
+  socket.value.on("connect", () => {
+    console.log("WebSocket connected");
+    isConnected.value = true;
+  });
 
-    socket.on("message", (data) => {
-      console.log("Новое сообщение:", data);
-    });
+  socket.value.on("disconnect", (reason) => {
+    console.log("WebSocket disconnected:", reason);
+    isConnected.value = false;
+    if (reason === "io server disconnect") {
+      socket.value?.connect();
+    }
+  });
 
-    socket.on("connect_error", (err) => {
-      console.error("Ошибка подключения:", err);
-    });
+  socket.value.on("error", (error) => {
+    console.error("WebSocket error:", error);
+  });
 
-    socket.on("disconnect", () => {
-      console.log("Соединение с WebSocket разорвано");
-    });
-  }
-  return socket;
-};
-
-export const sendMessage = (content: string) => {
-  if (socket) {
-    socket.emit("message", { content });
-  } else {
-    console.error("Socket не инициализирован");
-  }
+  socket.value.on("new_message", (message: IMessage) => {
+    console.log("Received new message:", message);
+  });
 };
 
 export const disconnectSocket = () => {
-  if (socket) {
-    socket.disconnect();
-    socket = null;
+  if (socket.value) {
+    socket.value.disconnect();
+    socket.value = null;
+    isConnected.value = false;
   }
 };
 
-export const getSocket = () => socket;
+export const getSocket = (): Socket | null => socket.value;
+
+export const useSocketStatus = () => isConnected;
