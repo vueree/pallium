@@ -1,4 +1,3 @@
-// fetchChat.ts
 import { ref } from "vue";
 import axios from "axios";
 import Cookies from "js-cookie";
@@ -48,7 +47,7 @@ const setupSocketListeners = () => {
 };
 
 // Создание заголовков авторизации
-const createAuthHeaders = () => {
+const createAuthHeaders = (token: string | undefined) => {
   return token ? { Authorization: `Bearer ${token}` } : {};
 };
 
@@ -67,6 +66,10 @@ export const loginUser = async (
     if (response.status === 200) {
       const { token } = response.data;
       setToken(token);
+
+      // Сохраняем username в localStorage
+      localStorage.setItem("username", username);
+
       router.push("/chat");
     }
   } catch (error: any) {
@@ -89,6 +92,10 @@ export const registerUser = async (
     if (response.status === 201) {
       const { token } = response.data;
       setToken(token);
+
+      // Сохраняем username в localStorage
+      localStorage.setItem("username", username);
+
       router.push("/chat");
     }
   } catch (error: any) {
@@ -96,63 +103,25 @@ export const registerUser = async (
   }
 };
 
-// Метод для отправки сообщения
-export const sendMessage = async (content: string): Promise<IMessage> => {
-  const token = Cookies.get("auth_token"); // Получаем актуальный токен
-  if (!token) {
-    throw new Error(
-      "Токен отсутствует. Авторизуйтесь, чтобы отправлять сообщения."
-    );
-  }
-  try {
-    const response = await axios.post(
-      `${API_URL}/chat/send`,
-      { content },
-      {
-        headers: createAuthHeaders()
-      }
-    );
-    const newMessage = response.data.newMessage;
-    const socket = getSocket();
-    if (socket && socket.connected) {
-      socket.emit("new_message", newMessage); // Отправляем новое сообщение через сокет
-    }
-    messagesRef.value.push(newMessage); // Добавляем новое сообщение в локальное состояние
+// Экспорт состояния сообщений
+export const useMessages = () => messagesRef;
 
-    return newMessage;
-  } catch (error: any) {
-    handleError(error, "Ошибка отправки сообщения:");
-    throw new Error("Ошибка отправки сообщения");
-  }
-};
-
-export const getMessages = async (token: string) => {
+export const getMessages = async () => {
   try {
     const response = await axios.get(`${API_URL}/chat/messages`, {
-      headers: createAuthHeaders()
+      headers: createAuthHeaders(token)
     });
-    initializeSocket(token);
-    const socket = getSocket();
-    console.log("✌️socket --->", socket);
-    if (socket && socket.connected) {
-      socket.emit("get_messages");
-    } else {
-      console.error("Socket not connected");
-    }
-    messagesRef.value = response.data;
+    messagesRef.value = response.data; // Записываем полученные сообщения
   } catch (error) {
     console.error("Ошибка при получении сообщений:", error);
   }
 };
 
-// Экспорт состояния сообщений
-export const useMessages = () => messagesRef;
-
 // Метод для очистки всех сообщений
 export const clearMessages = async (): Promise<void> => {
   try {
     await axios.delete(`${API_URL}/chat/clear`, {
-      headers: createAuthHeaders()
+      headers: createAuthHeaders(token)
     });
     messagesRef.value = [];
     const socket = getSocket();

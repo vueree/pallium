@@ -1,16 +1,15 @@
-<!-- ChatPage.vue -->
 <script setup lang="ts">
-import { ref, onMounted, onUnmounted, nextTick, watch } from "vue";
+import {
+  ref,
+  onMounted,
+  onUnmounted,
+  nextTick,
+  watch,
+  onBeforeMount
+} from "vue";
 import InputBase from "@/components/atom/InputBase.vue";
 import BtnBase from "@/components/atom/BtnBase.vue";
-// import type { IMessage } from "@/types";
-import {
-  getMessages,
-  useMessages,
-  sendMessage as sendChatMessage,
-  clearMessages
-} from "@/use/fetchChat";
-
+import { useMessages, clearMessages, getMessages } from "@/use/fetchChat";
 import { useWebSocketStore } from "@/stores/webSockets.store";
 import Cookies from "js-cookie";
 
@@ -19,6 +18,7 @@ const usernameRef = ref("");
 const messagesRef = useMessages();
 const token = Cookies.get("auth_token");
 const webSocketStore = useWebSocketStore();
+// const messageContent = ref(""); // Поле ввода сообщения
 const chatAreaRef = ref<HTMLElement | null>(null);
 
 const scrollToBottom = () => {
@@ -29,75 +29,96 @@ const scrollToBottom = () => {
   });
 };
 
-const sendMessage = async () => {
-  const message = chatInputRef.value.trim();
-  if (message) {
-    try {
-      const newMessage = await sendChatMessage(message);
-      chatInputRef.value = "";
-      scrollToBottom();
-      // Включаем имя пользователя при добавлении нового сообщения
-      messagesRef.value.push({
-        ...newMessage,
-        sender: {
-          username: usernameRef.value // Локальное имя пользователя
-        }
-      });
-    } catch (error) {
-      console.error("Ошибка при отправке сообщения:", error);
-    }
+const removeChat = async () => {
+  if (token) {
+    await clearMessages();
   }
 };
+
+// const handleKeydown = async (event: KeyboardEvent) => {
+//   if (event.key === "Enter" && !event.shiftKey) {
+//     event.preventDefault();
+
+//     if (chatInputRef.value.trim() === "") {
+//       console.warn("Cannot send empty message");
+//       return;
+//     }
+
+//     // Вызываем sendMessage из стора с данными
+//     webSocketStore.sendMessage({
+//       message: chatInputRef.value,
+//       username: "YourUsername" // Здесь замените на динамическое имя пользователя
+//     });
+
+//     chatInputRef.value = ""; // Очищаем поле после отправки
+//   }
+// };
 
 const handleKeydown = async (event: KeyboardEvent) => {
+  webSocketStore.connect(token); // Подключение к WebSocket
+
   if (event.key === "Enter" && !event.shiftKey) {
     event.preventDefault();
-    await sendMessage();
-  }
-};
 
-const removeChat = async () => {
-  try {
-    if (token) {
-      await clearMessages(token);
-      messagesRef.value = [];
+    if (!webSocketStore.isConnected) {
+      console.error("WebSocket is not connected");
+      return;
     }
-  } catch (error) {
-    console.error("Ошибка при очистке чата:", error);
+
+    if (chatInputRef.value.trim() === "") {
+      console.warn("Cannot send empty message");
+      return;
+    }
+
+    console.log("Sending message:", {
+      message: chatInputRef.value,
+      username: localStorage.getItem("username") || "Anonymous"
+    });
+
+    webSocketStore.sendMessage({
+      message: chatInputRef.value,
+      username: localStorage.getItem("username") || "Anonymous"
+    });
+
+    chatInputRef.value = ""; // Очищаем поле после отправки
   }
 };
 
-onMounted(async () => {
+onMounted(() => {
   if (token) {
-    try {
-      await getMessages(token);
-      webSocketStore.connect(token);
-      scrollToBottom();
-    } catch (error) {
-      console.error("Ошибка при инициализации чата:", error);
-    }
+    // webSocketStore.connect(token); // Подключение к WebSocket
+    getMessages()
+      .then(() => scrollToBottom())
+      .catch((error) => console.error("Ошибка при инициализации чата:", error));
   }
 });
 
 onUnmounted(() => {
-  webSocketStore.disconnect();
+  webSocketStore.disconnect(); // Отключение от WebSocket
 });
 
-watch(
-  () => webSocketStore.messages,
-  () => {
-    scrollToBottom();
-  },
-  { deep: true }
-);
+// const getMessages = async () => {
+//   try {
+//     if (token) {
+//       // webSocketStore.connect(token); // Установить соединение с WebSocket
+//     }
 
-watch(
-  messagesRef,
-  () => {
-    scrollToBottom();
-  },
-  { deep: true }
-);
+//     const socket = webSocketStore.getSocket();
+
+//     if (socket) {
+//       socket.emit("request_message_history"); // Отправляем запрос на получение истории
+//     }
+//   } catch (error) {
+//     console.error("Ошибка при получении сообщений:", error);
+//   }
+// };
+
+// Вызов getMessages в beforeMount
+onBeforeMount(() => {
+  getMessages();
+});
+
+watch(messagesRef, () => scrollToBottom(), { deep: true });
 </script>
 
 <template>
@@ -106,24 +127,24 @@ watch(
       v-show="messagesRef.length > 0"
       :class="[$style['button-remove'], 'absolute']"
       targetButton="CleanChat"
-      @click="removeChat()"
+      @click="removeChat"
     />
     <div
       ref="chatAreaRef"
       :class="[$style.chatArea, 'flex flex-column w-full']"
     >
       <div
-        v-for="message in messagesRef"
-        :key="message.id"
+        v-for="(message, index) in messagesRef"
+        :key="index"
         :class="[
           $style.message,
-          message.sender?.username === usernameRef ? $style.ownMessage : ''
+          message.username === usernameRef ? $style.ownMessage : ''
         ]"
       >
         <span :class="$style.messageUser">{{
-          message.username || `ID: ${message.senderId}`
+          message.username || "Anonymous"
         }}</span>
-        <span :class="$style.messageText">{{ message.content }}</span>
+        <span :class="$style.messageText">{{ message.message }}</span>
         <span :class="$style.messageTime">{{
           new Date(message.timestamp).toLocaleTimeString()
         }}</span>
@@ -137,9 +158,8 @@ watch(
         placeholder="Введите сообщение..."
         width="1200px"
         @keydown="handleKeydown"
-      >
-        <BtnBase @click="sendMessage" label="Send" />
-      </InputBase>
+      />
+      <BtnBase @click="handleKeydown" label="Send" />
     </div>
   </main>
 </template>

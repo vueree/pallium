@@ -13,6 +13,7 @@
     "lint": "eslint . --ext .vue,.js,.jsx,.cjs,.mjs,.ts,.tsx,.cts,.mts --fix --ignore-path .gitignore"
   },
   "dependencies": {
+    "@types/socket.io-client": "^3.0.0",
     "axios": "^1.7.7",
     "bcryptjs": "^2.4.3",
     "dotenv": "^16.4.5",
@@ -21,7 +22,7 @@
     "jsonwebtoken": "^9.0.2",
     "mongoose": "^8.7.2",
     "pinia": "^2.1.7",
-    "socket.io-client": "^4.8.0",
+    "socket.io-client": "^4.8.1",
     "vue": "^3.4.29",
     "vue-router": "^4.3.3",
     "ws": "^8.18.0"

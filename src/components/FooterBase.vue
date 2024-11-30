@@ -1,15 +1,9 @@
 <script setup lang="ts">
-import { onMounted, onUnmounted } from "vue";
-import { useWebSocketStore } from "@/stores/webSockets.store";
 import { storeToRefs } from "pinia";
+import { useWebSocketStore } from "@/stores/webSockets.store";
 
 const webSocketStore = useWebSocketStore();
-console.log("✌️useWebSocketStore --->", useWebSocketStore);
 const isConnected = storeToRefs(webSocketStore);
-
-onUnmounted(() => {
-  webSocketStore.disconnect();
-});
 </script>
 
 <template>
