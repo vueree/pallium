@@ -6,7 +6,7 @@ export interface IMessage {
 
 export interface IWebSocketState {
   isConnected: boolean;
-  messages: IMessage[];
+  message: IMessage[];
 }
 
 export interface IWebSocketEvents {

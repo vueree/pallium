@@ -16,8 +16,8 @@ export const useChatStore = defineStore("chat", () => {
     );
   });
 
-  const addMessage = (message: IMessage) => {
-    messages.value.push(message);
+  const addMessage = (content: IMessage) => {
+    messages.value.push(content);
   };
 
   const setMessages = (newMessages: IMessage[]) => {
@@ -35,8 +35,8 @@ export const useChatStore = defineStore("chat", () => {
       isLoading.value = false;
     });
 
-    socket.on("new_message", (message: IMessage) => {
-      addMessage(message);
+    socket.on("new_message", (content: IMessage) => {
+      addMessage(content);
     });
 
     socket.on("error", (err: any) => {

@@ -5,21 +5,21 @@ import {
   onUnmounted,
   nextTick,
   watch,
-  onBeforeMount
+  onBeforeMount,
+  computed
 } from "vue";
-import InputBase from "@/components/atom/InputBase.vue";
 import BtnBase from "@/components/atom/BtnBase.vue";
-import { useMessages, clearMessages, getMessages } from "@/use/fetchChat";
+import { clearMessages, getMessages } from "@/use/fetchChat";
 import { useWebSocketStore } from "@/stores/webSockets.store";
 import Cookies from "js-cookie";
 
+const token = Cookies.get("auth_token");
 const chatInputRef = ref("");
 const usernameRef = ref("");
-const messagesRef = useMessages();
-const token = Cookies.get("auth_token");
 const webSocketStore = useWebSocketStore();
-// const messageContent = ref(""); // Поле ввода сообщения
 const chatAreaRef = ref<HTMLElement | null>(null);
+
+const messagesRef = computed(() => webSocketStore.messages);
 
 const scrollToBottom = () => {
   nextTick(() => {
@@ -35,28 +35,7 @@ const removeChat = async () => {
   }
 };
 
-// const handleKeydown = async (event: KeyboardEvent) => {
-//   if (event.key === "Enter" && !event.shiftKey) {
-//     event.preventDefault();
-
-//     if (chatInputRef.value.trim() === "") {
-//       console.warn("Cannot send empty message");
-//       return;
-//     }
-
-//     // Вызываем sendMessage из стора с данными
-//     webSocketStore.sendMessage({
-//       message: chatInputRef.value,
-//       username: "YourUsername" // Здесь замените на динамическое имя пользователя
-//     });
-
-//     chatInputRef.value = ""; // Очищаем поле после отправки
-//   }
-// };
-
 const handleKeydown = async (event: KeyboardEvent) => {
-  webSocketStore.connect(token); // Подключение к WebSocket
-
   if (event.key === "Enter" && !event.shiftKey) {
     event.preventDefault();
 
@@ -70,23 +49,18 @@ const handleKeydown = async (event: KeyboardEvent) => {
       return;
     }
 
-    console.log("Sending message:", {
-      message: chatInputRef.value,
-      username: localStorage.getItem("username") || "Anonymous"
-    });
-
     webSocketStore.sendMessage({
       message: chatInputRef.value,
       username: localStorage.getItem("username") || "Anonymous"
     });
 
-    chatInputRef.value = ""; // Очищаем поле после отправки
+    chatInputRef.value = "";
   }
 };
 
 onMounted(() => {
   if (token) {
-    // webSocketStore.connect(token); // Подключение к WebSocket
+    webSocketStore.connect(token);
     getMessages()
       .then(() => scrollToBottom())
       .catch((error) => console.error("Ошибка при инициализации чата:", error));
@@ -94,26 +68,9 @@ onMounted(() => {
 });
 
 onUnmounted(() => {
-  webSocketStore.disconnect(); // Отключение от WebSocket
+  webSocketStore.disconnect();
 });
 
-// const getMessages = async () => {
-//   try {
-//     if (token) {
-//       // webSocketStore.connect(token); // Установить соединение с WebSocket
-//     }
-
-//     const socket = webSocketStore.getSocket();
-
-//     if (socket) {
-//       socket.emit("request_message_history"); // Отправляем запрос на получение истории
-//     }
-//   } catch (error) {
-//     console.error("Ошибка при получении сообщений:", error);
-//   }
-// };
-
-// Вызов getMessages в beforeMount
 onBeforeMount(() => {
   getMessages();
 });
@@ -150,16 +107,20 @@ watch(messagesRef, () => scrollToBottom(), { deep: true });
         }}</span>
       </div>
     </div>
-    <div :class="[$style.inputArea, 'flex']">
-      <InputBase
+    <div :class="[$style.inputArea, 'flex gap-12']">
+      <textarea
         v-model="chatInputRef"
         class="w-full"
-        type="text"
         placeholder="Введите сообщение..."
-        width="1200px"
+        rows="3"
+        spellcheck="true"
         @keydown="handleKeydown"
       />
-      <BtnBase @click="handleKeydown" label="Send" />
+      <BtnBase
+        :btnClass="$style['button-send']"
+        label="Send"
+        @click="handleKeydown"
+      />
     </div>
   </main>
 </template>
@@ -213,5 +174,9 @@ watch(messagesRef, () => scrollToBottom(), { deep: true });
   top: -50px;
   right: 0;
   opacity: 50%;
+}
+
+.button-send {
+  width: 80px;
 }
 </style>

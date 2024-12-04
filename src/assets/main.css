@@ -16,6 +16,10 @@ input {
   flex-direction: column;
 }
 
+.justify-content {
+  justify-content: center;
+}
+
 .justify-between {
   justify-content: space-between;
 }
@@ -24,12 +28,12 @@ input {
   justify-content: flex-start;
 }
 
-.justify-center {
-  justify-content: center;
-}
-
 .items-center {
   align-items: center;
+}
+
+.gap-12 {
+  gap: 12px;
 }
 
 .text-center {
@@ -79,4 +83,12 @@ input {
 
 .max-height {
   height: calc(100vh - 130px);
+}
+
+.cl_white {
+  color: white;
+}
+
+.btn-font {
+  font-family: "Raleway", sans-serif;
 }
