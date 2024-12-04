@@ -24,36 +24,28 @@ const handleRegister = async () => {
 
 <template>
   <form class="flex flex-column items-center" @submit.prevent="handleRegister">
-    <h3 :class="$style.title">Регистрация</h3>
-    <InputBase
-      v-model="inputUsernameRef"
-      :class="$style.input"
-      id="username"
-      type="text"
-      isBorder
-      placeholder="Имя пользователя"
-    />
-    <InputBase
-      v-model="inputPasswordRef"
-      :class="$style.input"
-      id="password"
-      type="password"
-      isBorder
-      placeholder="Пароль"
-    />
-    <!-- <InputBase
-      v-model="inputEncryptionKeyRef"
-      :class="$style.input"
-      id="encryptionKey"
-      type="password"
-      isBorder
-      placeholder="Код шифрования"
-    /> -->
+    <h3 :class="$style.title">Greate account</h3>
+    <div class="flex flex-column gap-12">
+      <InputBase
+        v-model="inputUsernameRef"
+        id="username"
+        width="300px"
+        type="text"
+        isBorder
+        placeholder="Имя пользователя"
+      />
+      <InputBase
+        v-model="inputPasswordRef"
+        id="password"
+        type="password"
+        isBorder
+        placeholder="Пароль"
+      />
+    </div>
     <BtnBase
-      :class="$style['submit-button']"
+      :class="[$style['submit-button'], 'w-full']"
       type="submit"
-      label="Регистрация пользователя"
-      isLogin
+      label="Get Started"
     />
     <p v-if="errorMessage">{{ errorMessage }}</p>
   </form>
@@ -63,10 +55,6 @@ const handleRegister = async () => {
 .title {
   margin-top: 140px;
   font-size: 24px;
-}
-
-.input {
-  margin-top: 20px;
 }
 
 .submit-button {

@@ -12,7 +12,10 @@ export const useWebSocketStore = defineStore("webSocket", () => {
   const isConnected = ref(false);
 
   const connect = (token: string | undefined) => {
-    initializeSocket(token);
+    if (token) {
+      initializeSocket(token);
+    }
+
     const socket = getSocket();
 
     if (socket) {
@@ -26,17 +29,17 @@ export const useWebSocketStore = defineStore("webSocket", () => {
         console.log("WebSocket disconnected");
       });
 
-      // Обрабатываем событие new_message
       socket.on("new_message", (message: IMessage) => {
-        messages.value.push(message); // Добавляем новое сообщение
+        console.log("Received new message:", message);
+        messages.value.push(message);
       });
 
       socket.on("message_history", (history: IMessage[]) => {
-        messages.value = history; // Загружаем историю сообщений
+        messages.value = history;
       });
 
       socket.on("messages_cleared", () => {
-        messages.value = []; // Очистка всех сообщений
+        messages.value = [];
       });
     }
   };
@@ -53,7 +56,7 @@ export const useWebSocketStore = defineStore("webSocket", () => {
   const disconnect = () => {
     disconnectSocket();
     isConnected.value = false;
-    messages.value = []; // Очистка сообщений при отключении
+    messages.value = [];
   };
 
   return {

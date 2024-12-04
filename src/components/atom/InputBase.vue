@@ -45,6 +45,7 @@ const inputId = computed(
       'flex items-center relative'
     ]"
   >
+    <div></div>
     <input
       v-model="inputValue"
       :class="$style.input"
@@ -63,7 +64,6 @@ const inputId = computed(
 .input-wrapper {
   position: relative;
   min-height: 60px;
-  height: "26px";
 }
 
 .input {
@@ -73,6 +73,7 @@ const inputId = computed(
 
 .input::placeholder {
   color: #797b85;
+  opacity: 50%;
 }
 
 .slot {

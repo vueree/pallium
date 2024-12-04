@@ -1,6 +1,5 @@
 import { reactive } from "vue";
 import { io, Socket } from "socket.io-client";
-import type { IMessage } from "../types";
 
 const state = reactive<{
   socket: Socket | null;
@@ -11,10 +10,10 @@ const state = reactive<{
 });
 
 export const initializeSocket = (token: string) => {
-  state.socket = io("http://localhost:3000/chat", {
+  state.socket = io("https://api-pallium.onrender.com/chat", {
     auth: { token },
     reconnection: true,
-    reconnectionDelay: 2000,
+    reconnectionDelay: 4000,
     reconnectionAttempts: Infinity
   });
 

@@ -3,7 +3,7 @@ import { storeToRefs } from "pinia";
 import { useWebSocketStore } from "@/stores/webSockets.store";
 
 const webSocketStore = useWebSocketStore();
-const isConnected = storeToRefs(webSocketStore);
+const { isConnected } = storeToRefs(webSocketStore);
 </script>
 
 <template>

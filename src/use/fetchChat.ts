@@ -2,13 +2,12 @@ import { ref } from "vue";
 import axios from "axios";
 import Cookies from "js-cookie";
 import type { IMessage } from "../types";
-import { initializeSocket, getSocket, disconnectSocket } from "./useWebSocket";
+import { getSocket, disconnectSocket } from "./useWebSocket";
 
-const API_URL = "http://localhost:3000/api";
+const API_URL = "https://api-pallium.onrender.com/";
 const token = Cookies.get("auth_token");
 const messagesRef = ref<IMessage[]>([]);
 
-// Сохранение токена в куки
 const setToken = (token: string | null) => {
   if (token) {
     Cookies.set("auth_token", token, { expires: 7, secure: true });
@@ -19,7 +18,6 @@ const setToken = (token: string | null) => {
   }
 };
 
-// Настройка слушателей сокета
 const setupSocketListeners = () => {
   const socket = getSocket();
   if (socket) {
@@ -28,15 +26,15 @@ const setupSocketListeners = () => {
     socket.off("message_history");
 
     // Слушатель истории сообщений
-    socket.on("message_history", (messages: IMessage[]) => {
-      messagesRef.value = messages;
-      console.log("Received message history:", messages);
+    socket.on("message_history", (content: IMessage[]) => {
+      messagesRef.value = content;
+      console.log("Received message history:", content);
     });
 
     // Слушатель новых сообщений
-    socket.on("new_message", (message: IMessage) => {
-      messagesRef.value.push(message);
-      console.log("Received new message:", message);
+    socket.on("new_message", (content: IMessage) => {
+      messagesRef.value.push(content);
+      console.log("Received new content:", content);
     });
 
     // Слушатель ошибок
@@ -58,16 +56,18 @@ export const loginUser = async (
   router: any
 ) => {
   try {
-    const response = await axios.post(`${API_URL}/auth/login`, {
-      username,
-      password
-    });
+    const response = await axios.post(
+      "https://api-pallium.onrender.com/auth/login",
+      {
+        username,
+        password
+      }
+    );
 
     if (response.status === 200) {
       const { token } = response.data;
       setToken(token);
 
-      // Сохраняем username в localStorage
       localStorage.setItem("username", username);
 
       router.push("/chat");
@@ -77,50 +77,51 @@ export const loginUser = async (
   }
 };
 
-// Метод для регистрации пользователя
 export const registerUser = async (
   username: string,
   password: string,
   router: any
 ) => {
   try {
-    const response = await axios.post(`${API_URL}/auth/register`, {
-      username,
-      password
-    });
+    const response = await fetch(
+      "https://api-pallium.onrender.com/auth/register",
+      {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json"
+        },
+        body: JSON.stringify({ username, password })
+      }
+    );
 
-    if (response.status === 201) {
-      const { token } = response.data;
-      setToken(token);
-
-      // Сохраняем username в localStorage
-      localStorage.setItem("username", username);
-
-      router.push("/chat");
+    if (!response.ok) {
+      const errorData = await response.json();
+      throw new Error(errorData.message || "Неизвестная ошибка");
     }
-  } catch (error: any) {
-    handleError(error, "Ошибка регистрации:");
+
+    const data = await response.json();
+    console.log("User registered:", data);
+  } catch (error) {
+    console.error("Ошибка регистрации:", error.message);
   }
 };
 
-// Экспорт состояния сообщений
 export const useMessages = () => messagesRef;
 
 export const getMessages = async () => {
   try {
-    const response = await axios.get(`${API_URL}/chat/messages`, {
+    const response = await axios.get(`${API_URL}chat/messages`, {
       headers: createAuthHeaders(token)
     });
-    messagesRef.value = response.data; // Записываем полученные сообщения
+    messagesRef.value = response.data;
   } catch (error) {
     console.error("Ошибка при получении сообщений:", error);
   }
 };
 
-// Метод для очистки всех сообщений
 export const clearMessages = async (): Promise<void> => {
   try {
-    await axios.delete(`${API_URL}/chat/clear`, {
+    await axios.delete(`${API_URL}chat/clear`, {
       headers: createAuthHeaders(token)
     });
     messagesRef.value = [];
@@ -133,11 +134,10 @@ export const clearMessages = async (): Promise<void> => {
   }
 };
 
-// Метод для обработки ошибок
-const handleError = (error: any, message: string) => {
+const handleError = (error: any, content: string) => {
   if (error.response) {
-    console.error(`${message}`, error.response.data.message);
+    console.error(`${content}`, error.response.data.content);
   } else {
-    console.error("Ошибка:", error.message);
+    console.error("Ошибка:", error.content);
   }
 };
