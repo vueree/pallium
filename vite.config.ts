@@ -9,6 +9,12 @@ export default defineConfig({
       "@": path.resolve(__dirname, "./src")
     }
   },
+  build: {
+    outDir: "dist",
+    rollupOptions: {
+      input: path.resolve(__dirname, "index.html")
+    }
+  },
   server: {
     proxy: {
       "/api": {
@@ -17,7 +23,7 @@ export default defineConfig({
         secure: false
       },
       "/socket.io": {
-        target: "http://localhost:3000", // Corrected target for Socket.IO
+        target: "http://localhost:3000",
         changeOrigin: true,
         secure: false,
         ws: true
