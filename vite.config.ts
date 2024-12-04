@@ -10,7 +10,7 @@ export default defineConfig({
     }
   },
   build: {
-    outDir: "dist", // папка, куда Vite будет собирать проект
+    outDir: "./dist",
     rollupOptions: {
       input: path.resolve(__dirname, "index.html")
     }
@@ -18,7 +18,7 @@ export default defineConfig({
   server: {
     proxy: {
       "/api": {
-        target: "http://localhost:3000", // проксируем API запросы на сервер
+        target: "http://localhost:3000",
         changeOrigin: true,
         secure: false
       },
@@ -28,6 +28,7 @@ export default defineConfig({
         secure: false,
         ws: true
       }
-    }
+    },
+    historyApiFallback: true // Добавлено для SPA маршрутов
   }
 });
