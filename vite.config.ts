@@ -29,6 +29,12 @@ export default defineConfig({
         ws: true
       }
     },
-    historyApiFallback: true // Добавлено для SPA маршрутов
+    fs: {
+      strict: true // Ограничивает доступ к файлам вне корневой директории
+    },
+    hmr: {
+      overlay: false // Отключает автоматический перезапуск клиента
+    },
+    middlewareMode: false // Отключает режим middleware
   }
 });
