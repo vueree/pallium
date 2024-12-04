@@ -4,9 +4,10 @@
   "private": true,
   "type": "module",
   "scripts": {
-    "build": "yarn install && vite build",
+    "build": "vite build",
     "dev": "vite",
     "preview": "vite preview",
+    "start": "vite preview",
     "test:unit": "vitest",
     "build-only": "vite build",
     "type-check": "vue-tsc --build --force",
