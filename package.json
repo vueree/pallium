@@ -4,8 +4,8 @@
   "private": true,
   "type": "module",
   "scripts": {
+    "build": "yarn install && vite build",
     "dev": "vite",
-    "build": "vite build",
     "preview": "vite preview",
     "test:unit": "vitest",
     "build-only": "vite build",
