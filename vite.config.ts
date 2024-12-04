@@ -10,7 +10,7 @@ export default defineConfig({
     }
   },
   build: {
-    outDir: "dist",
+    outDir: "dist", // папка, куда Vite будет собирать проект
     rollupOptions: {
       input: path.resolve(__dirname, "index.html")
     }
@@ -18,7 +18,7 @@ export default defineConfig({
   server: {
     proxy: {
       "/api": {
-        target: "http://localhost:3000",
+        target: "http://localhost:3000", // проксируем API запросы на сервер
         changeOrigin: true,
         secure: false
       },
