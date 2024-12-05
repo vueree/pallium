@@ -107,7 +107,7 @@ watch(messages, () => scrollToBottom(), { deep: true });
         }}</span>
       </div>
     </div>
-    <div :class="[$style.inputArea, 'flex gap-12']">
+    <div :class="[$style.inputArea, 'flex gap-12 items-center']">
       <textarea
         v-model="chatInputRef"
         :class="[$style.textArea, 'w-full']"
@@ -161,6 +161,9 @@ watch(messages, () => scrollToBottom(), { deep: true });
 
 .textArea {
   border: none;
+  resize: none;
+  padding: 8px 12px;
+  border-radius: 10px;
 }
 
 .messageTime {
@@ -172,6 +175,7 @@ watch(messages, () => scrollToBottom(), { deep: true });
 
 .inputArea {
   margin-top: auto;
+  margin-bottom: 8px;
 }
 
 .button-remove {
