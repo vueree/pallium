@@ -18,15 +18,15 @@ export default defineConfig({
   server: {
     proxy: {
       "/auth": {
-        target: "http://localhost:3000", // или http://localhost:3000 для локальной разработки
+        target: "http://localhost:3000",
         changeOrigin: true
       },
       "/chat": {
-        target: "http://localhost:3000", // или http://localhost:3000 для локальной разработки
+        target: "http://localhost:3000",
         changeOrigin: true
       },
       "/socket.io": {
-        target: "http://localhost:3000", // или http://localhost:3000 для локальной разработки
+        target: "http://localhost:3000",
         changeOrigin: true,
         ws: true
       }
