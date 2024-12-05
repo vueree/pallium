@@ -18,15 +18,15 @@ export default defineConfig({
   server: {
     proxy: {
       "/auth": {
-        target: "https://api-pallium.onrender.com", // или http://localhost:3000 для локальной разработки
+        target: "http://localhost:3000", // или http://localhost:3000 для локальной разработки
         changeOrigin: true
       },
       "/chat": {
-        target: "https://api-pallium.onrender.com", // или http://localhost:3000 для локальной разработки
+        target: "http://localhost:3000", // или http://localhost:3000 для локальной разработки
         changeOrigin: true
       },
       "/socket.io": {
-        target: "https://api-pallium.onrender.com", // или http://localhost:3000 для локальной разработки
+        target: "http://localhost:3000", // или http://localhost:3000 для локальной разработки
         changeOrigin: true,
         ws: true
       }
