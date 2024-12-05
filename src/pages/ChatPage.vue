@@ -9,7 +9,7 @@ import {
   computed
 } from "vue";
 import BtnBase from "@/components/atom/BtnBase.vue";
-import { clearMessages, getMessages } from "@/use/fetchChat";
+import { clearMessages, getMessages, messagesRef } from "@/use/fetchChat";
 import { useWebSocketStore } from "@/stores/webSockets.store";
 import Cookies from "js-cookie";
 
@@ -19,7 +19,7 @@ const usernameRef = ref("");
 const webSocketStore = useWebSocketStore();
 const chatAreaRef = ref<HTMLElement | null>(null);
 
-const messagesRef = computed(() => webSocketStore.messages);
+// const messagesRef = computed(() => webSocketStore.messages);
 
 const scrollToBottom = () => {
   nextTick(() => {
@@ -61,10 +61,10 @@ const handleKeydown = async (event: KeyboardEvent) => {
 onMounted(() => {
   if (token) {
     webSocketStore.connect(token);
-    getMessages()
-      .then(() => scrollToBottom())
-      .catch((error) => console.error("Ошибка при инициализации чата:", error));
   }
+  getMessages()
+    .then(() => scrollToBottom())
+    .catch((error) => console.error("Ошибка при инициализации чата:", error));
 });
 
 onUnmounted(() => {
@@ -174,6 +174,8 @@ watch(messagesRef, () => scrollToBottom(), { deep: true });
   top: -50px;
   right: 0;
   opacity: 50%;
+  width: 20px;
+  height: 20px;
 }
 
 .button-send {

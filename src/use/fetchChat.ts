@@ -6,7 +6,7 @@ import { getSocket, disconnectSocket } from "./useWebSocket";
 
 const API_URL = "https://api-pallium.onrender.com/";
 const token = Cookies.get("auth_token");
-const messagesRef = ref<IMessage[]>([]);
+export const messagesRef = ref<IMessage[]>([]);
 
 const setToken = (token: string | null) => {
   if (token) {
@@ -49,7 +49,6 @@ const createAuthHeaders = (token: string | undefined) => {
   return token ? { Authorization: `Bearer ${token}` } : {};
 };
 
-// Метод для входа пользователя
 export const loginUser = async (
   username: string,
   password: string,
@@ -101,6 +100,10 @@ export const registerUser = async (
 
     const data = await response.json();
     console.log("User registered:", data);
+
+    localStorage.setItem("username", username);
+
+    router.push("/chat");
   } catch (error) {
     console.error("Ошибка регистрации:", error.message);
   }
