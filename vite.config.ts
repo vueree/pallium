@@ -12,18 +12,19 @@ export default defineConfig({
   build: {
     outDir: "dist"
   },
+  base: "/",
   server: {
     port: 5173,
     proxy: {
-      "/api/auth": {
+      "/auth": {
         target: "http://localhost:3000",
         changeOrigin: true,
-        rewrite: (path) => path.replace(/^\/api\/auth/, "/auth")
+        rewrite: (path) => path.replace(/^\/auth/, "/auth")
       },
-      "/api/chat": {
+      "/chat": {
         target: "http://localhost:3000",
         changeOrigin: true,
-        rewrite: (path) => path.replace(/^\/api\/chat/, "/chat")
+        rewrite: (path) => path.replace(/^\/chat/, "/chat")
       },
       "/socket.io": {
         target: "http://localhost:3000",
@@ -31,6 +32,5 @@ export default defineConfig({
         changeOrigin: true
       }
     }
-  },
-  base: "/"
+  }
 });
