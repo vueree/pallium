@@ -19,7 +19,7 @@ const usernameRef = ref("");
 const webSocketStore = useWebSocketStore();
 const chatAreaRef = ref<HTMLElement | null>(null);
 
-// const messagesRef = computed(() => webSocketStore.messages);
+const messages = computed(() => messagesRef.value);
 
 const scrollToBottom = () => {
   nextTick(() => {
@@ -75,13 +75,13 @@ onBeforeMount(() => {
   getMessages();
 });
 
-watch(messagesRef, () => scrollToBottom(), { deep: true });
+watch(messages, () => scrollToBottom(), { deep: true });
 </script>
 
 <template>
   <main :class="[$style.wrapper, 'flex flex-column w-full h-full']">
     <BtnBase
-      v-show="messagesRef.length > 0"
+      v-show="messages.length > 0"
       :class="[$style['button-remove'], 'absolute']"
       targetButton="CleanChat"
       @click="removeChat"
@@ -91,7 +91,7 @@ watch(messagesRef, () => scrollToBottom(), { deep: true });
       :class="[$style.chatArea, 'flex flex-column w-full']"
     >
       <div
-        v-for="(message, index) in messagesRef"
+        v-for="(message, index) in messages"
         :key="index"
         :class="[
           $style.message,
@@ -141,12 +141,12 @@ watch(messagesRef, () => scrollToBottom(), { deep: true });
   margin-bottom: 8px;
   border-radius: 8px;
   background-color: #f0f0f0;
-  align-self: flex-start;
+  align-self: flex-end;
   max-width: 70%;
 }
 
 .ownMessage {
-  align-self: flex-end;
+  align-self: flex-start;
   background-color: #dcf8c6;
 }
 

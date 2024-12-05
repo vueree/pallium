@@ -5,6 +5,7 @@ import {
   disconnectSocket,
   getSocket
 } from "../use/useWebSocket";
+import { messagesRef } from "@/use/fetchChat";
 import type { IMessage } from "../types";
 
 export const useWebSocketStore = defineStore("webSocket", () => {
@@ -29,17 +30,20 @@ export const useWebSocketStore = defineStore("webSocket", () => {
         console.log("WebSocket disconnected");
       });
 
+      // Обработка нового сообщения
       socket.on("new_message", (message: IMessage) => {
         console.log("Received new message:", message);
-        messages.value.push(message);
+        messagesRef.value.push(message); // Обновляем messagesRef
       });
 
+      // Обработка истории сообщений
       socket.on("message_history", (history: IMessage[]) => {
-        messages.value = history;
+        messagesRef.value = history; // Загружаем историю в messagesRef
       });
 
+      // Обработка очистки сообщений
       socket.on("messages_cleared", () => {
-        messages.value = [];
+        messagesRef.value = []; // Очищаем messagesRef
       });
     }
   };

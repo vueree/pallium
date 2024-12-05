@@ -21,30 +21,25 @@ const setToken = (token: string | null) => {
 const setupSocketListeners = () => {
   const socket = getSocket();
   if (socket) {
-    // Удаляем существующие слушатели перед добавлением новых
     socket.off("new_message");
     socket.off("message_history");
 
-    // Слушатель истории сообщений
     socket.on("message_history", (content: IMessage[]) => {
       messagesRef.value = content;
       console.log("Received message history:", content);
     });
 
-    // Слушатель новых сообщений
     socket.on("new_message", (content: IMessage) => {
       messagesRef.value.push(content);
       console.log("Received new content:", content);
     });
 
-    // Слушатель ошибок
     socket.on("error", (error: any) => {
       console.error("Socket error:", error);
     });
   }
 };
 
-// Создание заголовков авторизации
 const createAuthHeaders = (token: string | undefined) => {
   return token ? { Authorization: `Bearer ${token}` } : {};
 };
