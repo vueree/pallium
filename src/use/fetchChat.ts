@@ -4,7 +4,8 @@ import Cookies from "js-cookie";
 import type { IMessage } from "../types";
 import { getSocket, disconnectSocket } from "./useWebSocket";
 
-const API_URL = "https://api-pallium.onrender.com/";
+const API_URL = import.meta.env.VITE_API_BASE_URL || "http://localhost:3000";
+
 const token = Cookies.get("auth_token");
 export const messagesRef = ref<IMessage[]>([]);
 
