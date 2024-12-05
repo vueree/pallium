@@ -10,26 +10,27 @@ export default defineConfig({
     }
   },
   build: {
-    outDir: "./dist",
-    rollupOptions: {
-      input: path.resolve(__dirname, "index.html")
-    }
+    outDir: "dist"
   },
   server: {
+    port: 5173,
     proxy: {
-      "/auth": {
+      "/api/auth": {
         target: "http://localhost:3000",
-        changeOrigin: true
+        changeOrigin: true,
+        rewrite: (path) => path.replace(/^\/api\/auth/, "/auth")
       },
-      "/chat": {
+      "/api/chat": {
         target: "http://localhost:3000",
-        changeOrigin: true
+        changeOrigin: true,
+        rewrite: (path) => path.replace(/^\/api\/chat/, "/chat")
       },
       "/socket.io": {
         target: "http://localhost:3000",
-        changeOrigin: true,
-        ws: true
+        ws: true,
+        changeOrigin: true
       }
     }
-  }
+  },
+  base: "/"
 });
