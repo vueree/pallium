@@ -110,7 +110,7 @@ watch(messages, () => scrollToBottom(), { deep: true });
     <div :class="[$style.inputArea, 'flex gap-12']">
       <textarea
         v-model="chatInputRef"
-        class="w-full"
+        :class="[$style.textArea, 'w-full']"
         placeholder="Введите сообщение..."
         rows="3"
         spellcheck="true"
@@ -157,6 +157,10 @@ watch(messages, () => scrollToBottom(), { deep: true });
 
 .messageText {
   display: block;
+}
+
+.textArea {
+  border: none;
 }
 
 .messageTime {
