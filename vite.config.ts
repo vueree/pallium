@@ -17,24 +17,19 @@ export default defineConfig({
   },
   server: {
     proxy: {
-      "/api": {
-        // target: "http://localhost:3000",
-        target: "https://api-pallium.onrender.com",
+      "/auth": {
+        target: "https://api-pallium.onrender.com", // или http://localhost:3000 для локальной разработки
+        changeOrigin: true
+      },
+      "/chat": {
+        target: "https://api-pallium.onrender.com", // или http://localhost:3000 для локальной разработки
         changeOrigin: true
       },
       "/socket.io": {
-        // target: "http://localhost:3000",
-        target: "https://api-pallium.onrender.com",
+        target: "https://api-pallium.onrender.com", // или http://localhost:3000 для локальной разработки
         changeOrigin: true,
         ws: true
       }
     }
-    // fs: {
-    //   strict: true // Ограничивает доступ к файлам вне корневой директории
-    // },
-    // hmr: {
-    //   overlay: false // Отключает автоматический перезапуск клиента
-    // },
-    // middlewareMode: false // Отключает режим middleware
   }
 });
