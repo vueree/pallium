@@ -23,7 +23,7 @@ const routes = [
   {
     path: "/:pathMatch(.*)*",
     name: "NotFound",
-    component: NotFound // Страница 404
+    component: NotFound
   }
 ];
 
