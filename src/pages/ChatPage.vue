@@ -19,7 +19,7 @@ const usernameRef = ref("");
 const webSocketStore = useWebSocketStore();
 const chatAreaRef = ref<HTMLElement | null>(null);
 
-const messages = computed(() => messagesRef.value);
+const messages = computed(() => [...messagesRef.value].reverse());
 
 const scrollToBottom = () => {
   nextTick(() => {
