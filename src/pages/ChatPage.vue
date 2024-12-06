@@ -13,8 +13,6 @@ const chatAreaRef = ref<HTMLElement | null>(null);
 const webSocketStore = useWebSocketStore();
 const { messages, isConnected } = storeToRefs(webSocketStore);
 
-const sortedMessages = computed(() => [...messages.value].reverse());
-
 const scrollToBottom = () => {
   nextTick(() => {
     if (chatAreaRef.value) {
@@ -67,13 +65,13 @@ onUnmounted(() => {
   webSocketStore.disconnect();
 });
 
-watch(sortedMessages, scrollToBottom, { deep: true });
+watch(messages, scrollToBottom, { deep: true });
 </script>
 
 <template>
   <main :class="[$style.wrapper, 'flex flex-column w-full h-full']">
     <BtnBase
-      v-show="sortedMessages.length"
+      v-show="messages.length"
       :btnClass="[$style['button-remove'], 'absolute']"
       label="Clear"
       @click="removeChat"
@@ -84,7 +82,7 @@ watch(sortedMessages, scrollToBottom, { deep: true });
       :class="[$style.chatArea, 'flex flex-column w-full']"
     >
       <div
-        v-for="(message, index) in sortedMessages"
+        v-for="(message, index) in messages"
         :key="`${message.timestamp}-${index}`"
         :class="[
           $style.message,
@@ -127,7 +125,6 @@ watch(sortedMessages, scrollToBottom, { deep: true });
 
 .chatArea {
   overflow-y: auto;
-  padding: 20px;
 }
 
 .message {

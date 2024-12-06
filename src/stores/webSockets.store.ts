@@ -33,7 +33,7 @@ export const useWebSocketStore = defineStore("webSocket", () => {
 
       socket.on("new_message", (content: IMessage) => {
         console.log("📥 Received new message:", content);
-        messages.value = [content, ...messages.value];
+        messages.value.push(content);
       });
 
       socket.on("messages_cleared", () => {
