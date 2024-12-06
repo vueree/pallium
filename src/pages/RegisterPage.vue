@@ -55,10 +55,10 @@ const handleRegister = () => handleSubmit(router);
         :disabled="!state.username || !state.password || state.isLoading"
       />
 
-      <p :class="$style.loginLink">
+      <!-- <p :class="$style.loginLink">
         Already have an account?
         <router-link to="/login">Sign in</router-link>
-      </p>
+      </p> -->
     </form>
   </main>
 </template>
@@ -93,6 +93,7 @@ const handleRegister = () => handleSubmit(router);
   margin-top: 20px;
   height: 50px;
   transition: all 0.2s ease;
+  max-width: 300px;
 }
 
 .submitButton:disabled {

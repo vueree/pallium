@@ -1,4 +1,4 @@
-<!-- ChatPage.vue -->
+// ChatPage.vue
 <script setup lang="ts">
 import { ref, onMounted, onUnmounted, watch, computed, nextTick } from "vue";
 import { storeToRefs } from "pinia";
@@ -26,6 +26,7 @@ const scrollToBottom = () => {
 const removeChat = async () => {
   if (token) {
     await clearMessages();
+    localStorage.removeItem("chatMessages");
   }
 };
 
@@ -60,6 +61,10 @@ onMounted(async () => {
   if (token) {
     webSocketStore.connect(token);
     await getMessages();
+    const storedMessages = localStorage.getItem("chatMessages");
+    if (storedMessages) {
+      webSocketStore.setMessages(JSON.parse(storedMessages));
+    }
   }
 });
 
@@ -67,7 +72,14 @@ onUnmounted(() => {
   webSocketStore.disconnect();
 });
 
-watch(sortedMessages, scrollToBottom, { deep: true });
+watch(
+  sortedMessages,
+  () => {
+    scrollToBottom();
+    localStorage.setItem("chatMessages", JSON.stringify(sortedMessages.value));
+  },
+  { deep: true }
+);
 </script>
 
 <template>

@@ -7,6 +7,7 @@ interface IProps {
   label?: string;
   disabled?: boolean;
   btnClass?: string | string[];
+  width?: string;
 }
 
 const emit = defineEmits(["update:active"]);
@@ -36,6 +37,7 @@ const handleClick = (event: Event) => {
     :disabled="!href && disabled"
     :target="href ? target : null"
     :rel="href ? 'noopener noreferrer' : null"
+    :width="width"
     :class="[
       btnClass,
       'flex items-center justify-center w-full',

@@ -71,12 +71,15 @@ const handleLogin = () => handleSubmit(router);
 .title {
   margin-top: 140px;
   margin-bottom: 24px;
-  font-size: 24px;
+  font-size: 30px;
   font-weight: 600;
   color: var(--text-primary, #333);
+  opacity: 70%;
 }
 
 .error {
+  position: absolute;
+  top: 190px;
   padding: 10px;
   margin-bottom: 20px;
   color: #dc3545;
@@ -85,6 +88,9 @@ const handleLogin = () => handleSubmit(router);
   border-radius: 4px;
   text-align: center;
   width: 100%;
+  opacity: 50%;
+  border-radius: 10px;
+  width: 300px;
 }
 
 .btnContainer {

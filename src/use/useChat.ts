@@ -3,19 +3,14 @@ import axios from "axios";
 import Cookies from "js-cookie";
 import { getSocket, disconnectSocket } from "./useWebSocket";
 import { useWebSocketStore } from "@/stores/webSockets.store";
-import type { IMessage, IAuthResponse } from "../types";
+import type { IMessage, IAuthResponse, IChatState } from "../types";
 
-const API_URL = import.meta.env.VITE_API_BASE_URL || "http://localhost:3000";
-const AUTH_TOKEN_KEY = "auth_token";
-const USERNAME_KEY = "username";
 export const ANONYMOUS = "Anonymous";
 export const EMPTY_MESSAGE = "";
+const AUTH_TOKEN_KEY = "auth_token";
+const USERNAME_KEY = "username";
+const API_URL = import.meta.env.VITE_API_BASE_URL || "http://localhost:3000";
 const COOKIE_OPTIONS = { expires: 7, secure: true };
-
-interface ChatState {
-  input: string;
-  username: string;
-}
 
 export const token = Cookies.get(AUTH_TOKEN_KEY);
 
@@ -86,12 +81,10 @@ export const registerUser = async (
 };
 
 export const useChatState = () => {
-  const state = ref<ChatState>({
+  const state = ref<IChatState>({
     input: EMPTY_MESSAGE,
     username: getUsername()
   });
-
-  const messages = computed(() => messagesRef.value);
 
   const isValidMessage = (message: string, isConnected: boolean): boolean => {
     if (!isConnected) {
@@ -191,7 +184,7 @@ export const clearMessages = async (): Promise<void> => {
       headers: createAuthHeaders(token)
     });
 
-    messagesRef.value = [];
+    localStorage.removeItem("chatMessages");
 
     const socket = getSocket();
     if (socket?.connected) {

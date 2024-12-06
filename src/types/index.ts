@@ -9,6 +9,11 @@ export interface IMessage {
   timestamp: string;
 }
 
+export interface IChatState {
+  input: string;
+  username: string;
+}
+
 export interface IWebSocketState {
   isConnected: boolean;
   message: IMessage[];

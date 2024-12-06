@@ -15,6 +15,7 @@ export const useWebSocketStore = defineStore("webSocket", () => {
   const setMessages = (newMessages: IMessage[]) => {
     console.log("Setting messages in store:", newMessages);
     messages.value = newMessages;
+    localStorage.setItem("chatMessages", JSON.stringify(newMessages));
   };
 
   const setupSocketListeners = () => {
@@ -34,11 +35,13 @@ export const useWebSocketStore = defineStore("webSocket", () => {
       socket.on("new_message", (content: IMessage) => {
         console.log("📥 Received new message:", content);
         messages.value = [content, ...messages.value];
+        localStorage.setItem("chatMessages", JSON.stringify(messages.value));
       });
 
       socket.on("messages_cleared", () => {
         console.log("🗑️ Messages cleared");
         setMessages([]);
+        localStorage.removeItem("chatMessages");
       });
 
       socket.on("error", (error: Error) => {
@@ -94,7 +97,6 @@ export const useWebSocketStore = defineStore("webSocket", () => {
     console.log("Disconnecting WebSocket");
     disconnectSocket();
     isConnected.value = false;
-    messages.value = [];
   };
 
   return {
