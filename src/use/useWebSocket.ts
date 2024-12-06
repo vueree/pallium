@@ -10,6 +10,8 @@ const state = reactive<{
 });
 
 export const initializeSocket = (token: string) => {
+  console.log("Initializing socket with token:", token);
+
   state.socket = io("https://api-pallium.onrender.com/chat", {
     auth: { token },
     reconnection: true,
@@ -18,29 +20,40 @@ export const initializeSocket = (token: string) => {
   });
 
   state.socket.on("connect", () => {
-    console.log("WebSocket connected");
+    console.log("🟢 WebSocket connected successfully");
     state.isConnected = true;
   });
 
+  state.socket.on("connect_error", (error) => {
+    console.error("🔴 Connection error:", error.message);
+  });
+
   state.socket.on("disconnect", (reason) => {
-    console.log("WebSocket disconnected:", reason);
+    console.log("🔴 WebSocket disconnected:", reason);
     state.isConnected = false;
     if (reason === "io server disconnect") {
+      console.log("Attempting to reconnect...");
       state.socket?.connect();
     }
   });
 
   state.socket.on("error", (error) => {
-    console.error("WebSocket error:", error);
+    console.error("🔴 WebSocket error:", error);
   });
+
+  return state.socket;
 };
 
 export const disconnectSocket = () => {
+  console.log("Manually disconnecting socket");
   state.socket?.disconnect();
   state.socket = null;
   state.isConnected = false;
 };
 
-export const getSocket = (): Socket | null => state.socket;
+export const getSocket = (): Socket | null => {
+  console.log("Getting socket, connected:", state.isConnected);
+  return state.socket;
+};
 
 export const useSocketStatus = () => state.isConnected;

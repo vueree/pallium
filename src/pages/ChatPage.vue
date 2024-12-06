@@ -1,25 +1,19 @@
+<!-- ChatPage.vue -->
 <script setup lang="ts">
-import {
-  ref,
-  onMounted,
-  onUnmounted,
-  nextTick,
-  watch,
-  onBeforeMount,
-  computed
-} from "vue";
+import { ref, onMounted, onUnmounted, watch, computed, nextTick } from "vue";
+import { storeToRefs } from "pinia";
 import BtnBase from "@/components/atom/BtnBase.vue";
-import { clearMessages, getMessages, messagesRef } from "@/use/fetchChat";
+import { clearMessages, getMessages, token, getUsername } from "@/use/useChat";
 import { useWebSocketStore } from "@/stores/webSockets.store";
-import Cookies from "js-cookie";
 
-const token = Cookies.get("auth_token");
 const chatInputRef = ref("");
-const usernameRef = ref(localStorage.getItem("username") || "");
-const webSocketStore = useWebSocketStore();
+const usernameRef = ref(getUsername());
 const chatAreaRef = ref<HTMLElement | null>(null);
 
-const messages = computed(() => [...messagesRef.value].reverse());
+const webSocketStore = useWebSocketStore();
+const { messages, isConnected } = storeToRefs(webSocketStore);
+
+const sortedMessages = computed(() => [...messages.value].reverse());
 
 const scrollToBottom = () => {
   nextTick(() => {
@@ -36,19 +30,20 @@ const removeChat = async () => {
 };
 
 const sendMessage = () => {
-  if (!webSocketStore.isConnected) {
+  if (!isConnected.value) {
     console.error("WebSocket is not connected");
     return;
   }
 
-  if (chatInputRef.value.trim() === "") {
+  const messageText = chatInputRef.value.trim();
+  if (!messageText) {
     console.warn("Cannot send empty message");
     return;
   }
 
   webSocketStore.sendMessage({
-    message: chatInputRef.value,
-    username: localStorage.getItem("username") || "Anonymous"
+    message: messageText,
+    username: usernameRef.value
   });
 
   chatInputRef.value = "";
@@ -61,15 +56,10 @@ const handleKeydown = (event: KeyboardEvent) => {
   }
 };
 
-onBeforeMount(() => {
-  getMessages()
-    .then(() => scrollToBottom())
-    .catch((error) => console.error("Ошибка при инициализации чата:", error));
-});
-
-onMounted(() => {
+onMounted(async () => {
   if (token) {
     webSocketStore.connect(token);
+    await getMessages();
   }
 });
 
@@ -77,42 +67,40 @@ onUnmounted(() => {
   webSocketStore.disconnect();
 });
 
-onBeforeMount(() => {
-  getMessages();
-});
-
-watch(messages, () => scrollToBottom(), { deep: true });
+watch(sortedMessages, scrollToBottom, { deep: true });
 </script>
 
 <template>
   <main :class="[$style.wrapper, 'flex flex-column w-full h-full']">
     <BtnBase
-      v-show="messages.length > 0"
-      :class="[$style['button-remove'], 'absolute']"
+      v-show="sortedMessages.length"
+      :btnClass="[$style['button-remove'], 'absolute']"
       label="Clear"
       @click="removeChat"
     />
+
     <div
       ref="chatAreaRef"
       :class="[$style.chatArea, 'flex flex-column w-full']"
     >
       <div
-        v-for="(message, index) in messages"
-        :key="index"
+        v-for="(message, index) in sortedMessages"
+        :key="`${message.timestamp}-${index}`"
         :class="[
           $style.message,
           message.username === usernameRef ? $style.ownMessage : ''
         ]"
       >
-        <span :class="$style.messageUser">{{
-          message.username || "Anonymous"
-        }}</span>
+        <span :class="$style.messageUser">
+          {{ message.username || "Anonymous" }}
+        </span>
         <span :class="$style.messageText">{{ message.message }}</span>
-        <span :class="$style.messageTime">{{
-          new Date(message.timestamp).toLocaleTimeString()
-        }}</span>
+        <span :class="$style.messageTime">
+          {{ new Date(message.timestamp).toLocaleTimeString() }}
+        </span>
       </div>
     </div>
+
     <div :class="[$style.inputArea, 'flex gap-12 items-center']">
       <textarea
         v-model="chatInputRef"
@@ -125,6 +113,7 @@ watch(messages, () => scrollToBottom(), { deep: true });
       <BtnBase
         :btnClass="$style['button-send']"
         label="Send"
+        :disabled="!isConnected"
         @click="sendMessage"
       />
     </div>
@@ -137,9 +126,8 @@ watch(messages, () => scrollToBottom(), { deep: true });
 }
 
 .chatArea {
-  flex-grow: 1;
   overflow-y: auto;
-  padding: 20px 0;
+  padding: 20px;
 }
 
 .message {
@@ -154,6 +142,7 @@ watch(messages, () => scrollToBottom(), { deep: true });
 .ownMessage {
   align-self: flex-end;
   background-color: #dcf8c6;
+  margin-right: 10px;
 }
 
 .messageUser {
@@ -165,18 +154,18 @@ watch(messages, () => scrollToBottom(), { deep: true });
   display: block;
 }
 
-.textArea {
-  border: 1px solid rgba(173, 180, 230, 0.5);
-  resize: none;
-  padding: 8px 12px;
-  border-radius: 10px;
-}
-
 .messageTime {
   font-size: 0.8em;
   color: #888;
   display: block;
   text-align: right;
+}
+
+.textArea {
+  border: 1px solid rgba(173, 180, 230, 0.5);
+  resize: none;
+  padding: 8px 12px;
+  border-radius: 10px;
 }
 
 .inputArea {
@@ -187,7 +176,7 @@ watch(messages, () => scrollToBottom(), { deep: true });
 .button-remove {
   top: -56px;
   right: -6px;
-  opacity: 10%;
+  opacity: 0.1;
 }
 
 .button-remove,

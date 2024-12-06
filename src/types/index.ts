@@ -1,3 +1,8 @@
+export interface IAuthResponse {
+  token: string;
+  message?: string;
+}
+
 export interface IMessage {
   message: string;
   username: string;

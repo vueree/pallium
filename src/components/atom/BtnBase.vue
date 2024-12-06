@@ -46,7 +46,7 @@ const handleClick = (event: Event) => {
     ]"
     @click="handleClick"
   >
-    <span :class="[$style.label, 'cl_white text-center']">{{ label }}</span>
+    <span class="cl_white text-center">{{ label }}</span>
   </component>
 </template>
 
@@ -74,9 +74,5 @@ const handleClick = (event: Event) => {
 
 .btn:hover {
   background-position: right center;
-}
-
-.label {
-  margin-right: 6px;
 }
 </style>
