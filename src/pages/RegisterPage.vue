@@ -79,6 +79,8 @@ const handleRegister = () => handleSubmit(router);
 }
 
 .error {
+  position: absolute;
+  top: 190px;
   padding: 10px;
   margin-bottom: 20px;
   color: #dc3545;
@@ -86,7 +88,9 @@ const handleRegister = () => handleSubmit(router);
   border: 1px solid #f5c6cb;
   border-radius: 4px;
   text-align: center;
-  width: 100%;
+  opacity: 50%;
+  border-radius: 10px;
+  width: 300px;
 }
 
 .submitButton {
