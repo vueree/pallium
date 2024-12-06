@@ -58,13 +58,16 @@ const handleKeydown = async (event: KeyboardEvent) => {
   }
 };
 
+onBeforeMount(() => {
+  getMessages()
+    .then(() => scrollToBottom())
+    .catch((error) => console.error("Ошибка при инициализации чата:", error));
+});
+
 onMounted(() => {
   if (token) {
     webSocketStore.connect(token);
   }
-  getMessages()
-    .then(() => scrollToBottom())
-    .catch((error) => console.error("Ошибка при инициализации чата:", error));
 });
 
 onUnmounted(() => {
