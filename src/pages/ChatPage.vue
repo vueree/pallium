@@ -26,7 +26,6 @@ const scrollToBottom = () => {
 const removeChat = async () => {
   if (token) {
     await clearMessages();
-    localStorage.removeItem("chatMessages");
   }
 };
 
@@ -61,10 +60,6 @@ onMounted(async () => {
   if (token) {
     webSocketStore.connect(token);
     await getMessages();
-    const storedMessages = localStorage.getItem("chatMessages");
-    if (storedMessages) {
-      webSocketStore.setMessages(JSON.parse(storedMessages));
-    }
   }
 });
 
@@ -72,14 +67,7 @@ onUnmounted(() => {
   webSocketStore.disconnect();
 });
 
-watch(
-  sortedMessages,
-  () => {
-    scrollToBottom();
-    localStorage.setItem("chatMessages", JSON.stringify(sortedMessages.value));
-  },
-  { deep: true }
-);
+watch(sortedMessages, scrollToBottom, { deep: true });
 </script>
 
 <template>

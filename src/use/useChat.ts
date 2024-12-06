@@ -62,7 +62,7 @@ export const registerUser = async (
   router: any
 ): Promise<void> => {
   try {
-    const { data } = await axios.post<AuthResponse>(
+    const { data } = await axios.post<IAuthResponse>(
       `${API_URL}/auth/register`,
       {
         username,
