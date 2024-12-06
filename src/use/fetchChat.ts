@@ -109,7 +109,7 @@ export const useMessages = () => messagesRef;
 
 export const getMessages = async () => {
   try {
-    const response = await axios.get(`${API_URL}chat/messages`, {
+    const response = await axios.get(`${API_URL}/chat/messages`, {
       headers: createAuthHeaders(token)
     });
     messagesRef.value = response.data;
