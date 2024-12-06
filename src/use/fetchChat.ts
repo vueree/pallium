@@ -31,7 +31,7 @@ const setupSocketListeners = () => {
     });
 
     socket.on("new_message", (content: IMessage) => {
-      messagesRef.value.push(content);
+      messagesRef.value.unshift(content);
       console.log("Received new content:", content);
     });
 
@@ -51,13 +51,10 @@ export const loginUser = async (
   router: any
 ) => {
   try {
-    const response = await axios.post(
-      "https://api-pallium.onrender.com/auth/login",
-      {
-        username,
-        password
-      }
-    );
+    const response = await axios.post(`${API_URL}/auth/login`, {
+      username,
+      password
+    });
 
     if (response.status === 200) {
       const { token } = response.data;
@@ -78,16 +75,13 @@ export const registerUser = async (
   router: any
 ) => {
   try {
-    const response = await fetch(
-      "https://api-pallium.onrender.com/auth/register",
-      {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json"
-        },
-        body: JSON.stringify({ username, password })
-      }
-    );
+    const response = await fetch(`${API_URL}/auth/register`, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json"
+      },
+      body: JSON.stringify({ username, password })
+    });
 
     if (!response.ok) {
       const errorData = await response.json();
@@ -120,7 +114,7 @@ export const getMessages = async () => {
 
 export const clearMessages = async (): Promise<void> => {
   try {
-    await axios.delete(`${API_URL}chat/clear`, {
+    await axios.delete(`${API_URL}/chat/clear`, {
       headers: createAuthHeaders(token)
     });
     messagesRef.value = [];

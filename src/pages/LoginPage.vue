@@ -46,11 +46,10 @@ const handleLogin = async () => {
           type="submit"
           label="Sing in"
         />
-        <!-- :href="$router.resolve({ name: 'Registration' }).href" -->
         <BtnBase
           :btnClass="$style['submit-button']"
-          href="/register"
-          label="Great account"
+          :href="$router.resolve({ name: 'Registration' }).href"
+          label="Create account"
         />
       </div>
     </form>

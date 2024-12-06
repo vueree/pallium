@@ -3,6 +3,11 @@ body {
   margin: 0;
 }
 
+header,
+footer {
+  height: 60px;
+}
+
 input {
   border: 0;
   outline: none;

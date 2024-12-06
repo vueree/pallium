@@ -17,10 +17,6 @@ const { isConnected } = storeToRefs(webSocketStore);
 </template>
 
 <style module>
-.wrapper {
-  max-height: 60px;
-}
-
 .cl-green {
   color: green;
 }

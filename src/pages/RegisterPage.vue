@@ -24,7 +24,7 @@ const handleRegister = async () => {
 
 <template>
   <form class="flex flex-column items-center" @submit.prevent="handleRegister">
-    <h3 :class="$style.title">Greate account</h3>
+    <h3 :class="$style.title">Create account</h3>
     <div class="flex flex-column gap-12">
       <InputBase
         v-model="inputUsernameRef"

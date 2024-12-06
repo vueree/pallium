@@ -1,7 +1,7 @@
 import { createRouter, createWebHistory } from "vue-router";
 import LoginPage from "../pages/LoginPage.vue";
 import ChatPage from "../pages/ChatPage.vue";
-import Register from "../pages/Register.vue";
+import RegisterPage from "../pages/RegisterPage.vue";
 import NotFound from "../pages/NotFound.vue";
 
 const routes = [
@@ -13,7 +13,7 @@ const routes = [
   {
     path: "/register",
     name: "Registration",
-    component: Register
+    component: RegisterPage
   },
   {
     path: "/chat",

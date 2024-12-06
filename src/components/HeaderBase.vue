@@ -1,18 +1,19 @@
 <script setup lang="ts">
 import { ref } from "vue";
-import InputBase from "./atom/InputBase.vue";
 
 const inputValueRef = ref("");
 </script>
 
 <template>
   <header class="flex items-center justify-between w-full mx-auto max-width">
-    <h3>p a l l i u m</h3>
+    <a :href="$router.resolve({ name: 'Login' }).href">P A L L I U M</a>
   </header>
 </template>
 
 <style module>
-.title {
-  margin-top: auto;
+a {
+  text-decoration: none;
+  color: rgb(52, 93, 255);
+  cursor: pointer;
 }
 </style>

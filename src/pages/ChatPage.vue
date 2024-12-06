@@ -15,7 +15,7 @@ import Cookies from "js-cookie";
 
 const token = Cookies.get("auth_token");
 const chatInputRef = ref("");
-const usernameRef = ref("");
+const usernameRef = ref(localStorage.getItem("username") || "");
 const webSocketStore = useWebSocketStore();
 const chatAreaRef = ref<HTMLElement | null>(null);
 
@@ -35,26 +35,29 @@ const removeChat = async () => {
   }
 };
 
-const handleKeydown = async (event: KeyboardEvent) => {
+const sendMessage = () => {
+  if (!webSocketStore.isConnected) {
+    console.error("WebSocket is not connected");
+    return;
+  }
+
+  if (chatInputRef.value.trim() === "") {
+    console.warn("Cannot send empty message");
+    return;
+  }
+
+  webSocketStore.sendMessage({
+    message: chatInputRef.value,
+    username: localStorage.getItem("username") || "Anonymous"
+  });
+
+  chatInputRef.value = "";
+};
+
+const handleKeydown = (event: KeyboardEvent) => {
   if (event.key === "Enter" && !event.shiftKey) {
     event.preventDefault();
-
-    if (!webSocketStore.isConnected) {
-      console.error("WebSocket is not connected");
-      return;
-    }
-
-    if (chatInputRef.value.trim() === "") {
-      console.warn("Cannot send empty message");
-      return;
-    }
-
-    webSocketStore.sendMessage({
-      message: chatInputRef.value,
-      username: localStorage.getItem("username") || "Anonymous"
-    });
-
-    chatInputRef.value = "";
+    sendMessage();
   }
 };
 
@@ -86,7 +89,7 @@ watch(messages, () => scrollToBottom(), { deep: true });
     <BtnBase
       v-show="messages.length > 0"
       :class="[$style['button-remove'], 'absolute']"
-      targetButton="CleanChat"
+      label="Clear"
       @click="removeChat"
     />
     <div
@@ -122,7 +125,7 @@ watch(messages, () => scrollToBottom(), { deep: true });
       <BtnBase
         :btnClass="$style['button-send']"
         label="Send"
-        @click="handleKeydown"
+        @click="sendMessage"
       />
     </div>
   </main>
@@ -144,12 +147,12 @@ watch(messages, () => scrollToBottom(), { deep: true });
   margin-bottom: 8px;
   border-radius: 8px;
   background-color: #f0f0f0;
-  align-self: flex-end;
+  align-self: flex-start;
   max-width: 70%;
 }
 
 .ownMessage {
-  align-self: flex-start;
+  align-self: flex-end;
   background-color: #dcf8c6;
 }
 
@@ -163,7 +166,7 @@ watch(messages, () => scrollToBottom(), { deep: true });
 }
 
 .textArea {
-  border: none;
+  border: 1px solid rgba(173, 180, 230, 0.5);
   resize: none;
   padding: 8px 12px;
   border-radius: 10px;
@@ -182,13 +185,12 @@ watch(messages, () => scrollToBottom(), { deep: true });
 }
 
 .button-remove {
-  top: -50px;
-  right: 0;
-  opacity: 50%;
-  width: 20px;
-  height: 20px;
+  top: -56px;
+  right: -6px;
+  opacity: 10%;
 }
 
+.button-remove,
 .button-send {
   width: 80px;
 }
