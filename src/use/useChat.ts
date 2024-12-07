@@ -1,4 +1,4 @@
-import { ref, computed, nextTick, onUnmounted } from "vue";
+import { ref, nextTick, onUnmounted } from "vue";
 import axios from "axios";
 import Cookies from "js-cookie";
 import { getSocket, disconnectSocket } from "./useWebSocket";
@@ -7,7 +7,8 @@ import type { IMessage, IAuthResponse, IChatState } from "../types";
 
 export const ANONYMOUS = "Anonymous";
 export const EMPTY_MESSAGE = "";
-const AUTH_TOKEN_KEY = "auth_token";
+export const INPUT_WIDTH = "300px";
+export const AUTH_TOKEN_KEY = "auth_token";
 const USERNAME_KEY = "username";
 const API_URL = import.meta.env.VITE_API_BASE_URL || "http://localhost:3000";
 const COOKIE_OPTIONS = { expires: 7, secure: true };
@@ -156,7 +157,6 @@ export const useChatState = () => {
 
   return {
     state,
-    messages,
     isValidMessage,
     scrollToBottom,
     handleMessageSend,
@@ -183,8 +183,6 @@ export const clearMessages = async (): Promise<void> => {
     await axios.delete(`${API_URL}/chat/clear`, {
       headers: createAuthHeaders(token)
     });
-
-    localStorage.removeItem("chatMessages");
 
     const socket = getSocket();
     if (socket?.connected) {

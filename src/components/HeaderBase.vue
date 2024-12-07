@@ -1,12 +1,21 @@
 <script setup lang="ts">
-import { ref } from "vue";
+import { useRouter } from "vue-router";
+import Cookies from "js-cookie";
+import { AUTH_TOKEN_KEY } from "@/use/useChat";
 
-const inputValueRef = ref("");
+const router = useRouter();
+
+const handleLogout = () => {
+  Cookies.remove(AUTH_TOKEN_KEY, { path: "/", domain: "pallium.onrender.com" });
+  Cookies.remove(AUTH_TOKEN_KEY, { path: "/", domain: "localhost" });
+
+  router.push({ name: "Login" });
+};
 </script>
 
 <template>
   <header class="flex items-center w-full max-width mx-auto">
-    <a :href="$router.resolve({ name: 'Login' }).href">P A L L I U M</a>
+    <a class="pointer" @click.prevent="handleLogout"> P A L L I U M </a>
   </header>
 </template>
 
@@ -14,6 +23,7 @@ const inputValueRef = ref("");
 a {
   text-decoration: none;
   color: rgb(52, 93, 255);
-  cursor: pointer;
+  font-size: 16px;
+  font-weight: 500;
 }
 </style>

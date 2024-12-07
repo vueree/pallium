@@ -3,6 +3,7 @@ import { useRouter } from "vue-router";
 import InputBase from "@/components/atom/InputBase.vue";
 import BtnBase from "@/components/atom/BtnBase.vue";
 import { useAuth } from "@/use/useAuth";
+import { INPUT_WIDTH } from "@/use/useChat";
 
 const router = useRouter();
 const { state, handleSubmit } = useAuth(false);
@@ -17,41 +18,42 @@ const handleLogin = () => handleSubmit(router);
       class="flex flex-column items-center"
       @submit.prevent="handleLogin"
     >
-      <h3 :class="$style.title">Welcome!</h3>
+      <h3 class="title">Welcome!</h3>
 
-      <div v-if="state.error" :class="$style.error">
+      <div v-if="state.error" :class="[$style.error, 'absolute rounded-10']">
         {{ state.error }}
       </div>
 
       <div class="flex flex-column gap-12">
         <InputBase
           v-model="state.username"
-          width="300px"
+          inputClass="rounded-10"
+          :width="INPUT_WIDTH"
           type="text"
-          isBorder
           placeholder="Username"
           required
           :disabled="state.isLoading"
         />
         <InputBase
           v-model="state.password"
+          inputClass="rounded-10"
+          :width="INPUT_WIDTH"
           type="password"
-          isBorder
           placeholder="Password"
           required
           :disabled="state.isLoading"
         />
       </div>
 
-      <div :class="[$style.btnContainer, 'flex gap-12 w-full']">
+      <div :class="[$style['btn-container'], 'flex gap-12 w-full']">
         <BtnBase
-          :class="$style.submitButton"
+          :btnClass="$style['submit-button']"
           type="submit"
           :label="state.isLoading ? 'Signing in...' : 'Sign in'"
           :disabled="!state.username || !state.password || state.isLoading"
         />
         <BtnBase
-          :btnClass="$style.submitButton"
+          :btnClass="$style['submit-button']"
           :href="$router.resolve({ name: 'Registration' }).href"
           label="Create account"
           :disabled="state.isLoading"
@@ -71,14 +73,9 @@ const handleLogin = () => handleSubmit(router);
 .title {
   margin-top: 140px;
   margin-bottom: 24px;
-  font-size: 30px;
-  font-weight: 600;
-  color: var(--text-primary, #333);
-  opacity: 70%;
 }
 
 .error {
-  position: absolute;
   top: 190px;
   padding: 10px;
   margin-bottom: 20px;
@@ -88,22 +85,16 @@ const handleLogin = () => handleSubmit(router);
   border-radius: 4px;
   text-align: center;
   opacity: 50%;
-  border-radius: 10px;
   width: 300px;
 }
 
-.btnContainer {
-  width: 300px;
+.btn-container {
   margin-top: 20px;
+  width: 300px;
 }
 
-.submitButton {
+.submit-button {
   flex-grow: 1;
   transition: all 0.2s ease;
-}
-
-.submitButton:disabled {
-  opacity: 0.6;
-  cursor: not-allowed;
 }
 </style>

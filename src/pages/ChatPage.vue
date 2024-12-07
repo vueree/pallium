@@ -1,7 +1,7 @@
-// ChatPage.vue
 <script setup lang="ts">
-import { ref, onMounted, onUnmounted, watch, computed, nextTick } from "vue";
+import { ref, onMounted, onUnmounted, watch, nextTick } from "vue";
 import { storeToRefs } from "pinia";
+import { useRouter } from "vue-router";
 import BtnBase from "@/components/atom/BtnBase.vue";
 import { clearMessages, getMessages, token, getUsername } from "@/use/useChat";
 import { useWebSocketStore } from "@/stores/webSockets.store";
@@ -12,6 +12,8 @@ const chatAreaRef = ref<HTMLElement | null>(null);
 
 const webSocketStore = useWebSocketStore();
 const { messages, isConnected } = storeToRefs(webSocketStore);
+
+const router = useRouter();
 
 const scrollToBottom = () => {
   nextTick(() => {
@@ -55,10 +57,13 @@ const handleKeydown = (event: KeyboardEvent) => {
 };
 
 onMounted(async () => {
-  if (token) {
-    webSocketStore.connect(token);
-    await getMessages();
+  if (!token) {
+    router.push({ name: "Login" });
+    return;
   }
+
+  webSocketStore.connect(token);
+  await getMessages();
 });
 
 onUnmounted(() => {
@@ -69,7 +74,7 @@ watch(messages, scrollToBottom, { deep: true });
 </script>
 
 <template>
-  <main :class="[$style.wrapper, 'flex flex-column w-full h-full']">
+  <main :class="[$style.wrapper, 'flex flex-column h-full']">
     <BtnBase
       v-show="messages.length"
       :btnClass="[$style['button-remove'], 'absolute']"
@@ -92,17 +97,17 @@ watch(messages, scrollToBottom, { deep: true });
         <span :class="$style.messageUser">
           {{ message.username || "Anonymous" }}
         </span>
-        <span :class="$style.messageText">{{ message.message }}</span>
-        <span :class="$style.messageTime">
+        <span class="display-block">{{ message.message }}</span>
+        <span :class="[$style.messageTime, 'display-block']">
           {{ new Date(message.timestamp).toLocaleTimeString() }}
         </span>
       </div>
     </div>
 
-    <div :class="[$style.inputArea, 'flex gap-12 items-center']">
+    <div :class="[$style.inputArea, 'flex gap-12 items-center mx-auto w-full']">
       <textarea
         v-model="chatInputRef"
-        :class="[$style.textArea, 'w-full']"
+        :class="[$style.textArea, 'rounded-10']"
         placeholder="Введите сообщение..."
         rows="3"
         spellcheck="true"
@@ -121,10 +126,13 @@ watch(messages, scrollToBottom, { deep: true });
 <style module>
 .wrapper {
   position: relative;
+  max-width: 1200px;
 }
 
 .chatArea {
   overflow-y: auto;
+  padding-left: 16px;
+  padding-right: 16px;
 }
 
 .message {
@@ -147,14 +155,9 @@ watch(messages, scrollToBottom, { deep: true });
   margin-right: 8px;
 }
 
-.messageText {
-  display: block;
-}
-
 .messageTime {
   font-size: 0.8em;
   color: #888;
-  display: block;
   text-align: right;
 }
 
@@ -162,12 +165,13 @@ watch(messages, scrollToBottom, { deep: true });
   border: 1px solid rgba(173, 180, 230, 0.5);
   resize: none;
   padding: 8px 12px;
-  border-radius: 10px;
+  max-width: 1082px;
+  min-width: 1082px;
 }
 
 .inputArea {
-  margin-top: auto;
   margin-bottom: 8px;
+  margin-top: 8px;
 }
 
 .button-remove {

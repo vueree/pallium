@@ -11,6 +11,7 @@ interface Props {
   width?: string;
   isBorder?: boolean;
   isLogin?: boolean;
+  inputClass?: string;
 }
 
 const props = withDefaults(defineProps<Props>(), {
@@ -36,20 +37,10 @@ const inputId = computed(
 </script>
 
 <template>
-  <div
-    :class="[
-      $style['input-wrapper'],
-      {
-        [$style['is-border']]: isBorder
-      },
-      'flex items-center relative'
-    ]"
-  >
-    <div></div>
+  <div class="flex items-center relative">
     <input
       v-model="inputValue"
-      :class="$style.input"
-      :style="{ width: width, height: '26px' }"
+      :class="[$style.input, inputClass]"
       :type="type"
       :id="inputId"
       :name="name"
@@ -61,27 +52,11 @@ const inputId = computed(
 </template>
 
 <style module>
-.input-wrapper {
-  position: relative;
-  min-height: 60px;
-}
-
-.input {
-  padding: 8px;
-  border: none;
-}
-
-.input::placeholder {
-  color: #797b85;
-  opacity: 50%;
-}
-
 .slot {
   margin-top: auto;
 }
 
-.is-border {
-  border: 1px solid #8189b7;
-  border-radius: 10px;
+.input {
+  padding: 6px 8px;
 }
 </style>

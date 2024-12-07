@@ -27,12 +27,3 @@ useHead({
   <div class="cl_dived" />
   <FooterBase />
 </template>
-
-<style scoped>
-body {
-  font-family: "Raleway", sans-serif;
-  font-weight: 400;
-  font-size: 16px;
-  font-style: normal;
-}
-</style>

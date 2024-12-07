@@ -1,6 +1,11 @@
 html,
 body {
   margin: 0;
+  height: 100%;
+}
+
+body {
+  font-family: "Releway", sans-serif;
 }
 
 header,
@@ -8,10 +13,62 @@ footer {
   height: 60px;
 }
 
+input::placeholder {
+  font-size: 16px;
+  font-weight: 300;
+  color: #aaa;
+  opacity: 70%;
+}
+
 input {
   border: 0;
   outline: none;
+  border: 1px solid #8189b7;
+  min-height: 60px;
+  font-size: 18px;
+  font-weight: 400;
+  color: #333;
+  width: 300px;
 }
+
+.title {
+  font-size: 30px;
+  font-weight: 700;
+  color: #333;
+  margin-top: 140px;
+  margin-bottom: 24px;
+  opacity: 70%;
+}
+
+.chat-username {
+  font-size: 16px;
+  font-weight: 600;
+  color: #0077cc;
+}
+
+/* Время отправки сообщений */
+.chat-timestamp {
+  font-size: 12px;
+  font-weight: 400;
+  color: #888;
+}
+
+/* Сообщение */
+.chat-message {
+  font-size: 14px;
+  font-weight: 400;
+  color: #000;
+  line-height: 1.5;
+}
+
+/* Текст в инпутах */
+.chat-input-text {
+  font-size: 14px;
+  font-weight: 400;
+  color: #000;
+}
+
+/* flex */
 
 .flex {
   display: flex;
@@ -21,7 +78,7 @@ input {
   flex-direction: column;
 }
 
-.justify-content {
+.justify-center {
   justify-content: center;
 }
 
@@ -57,12 +114,12 @@ input {
   border-radius: 10px;
 }
 
-.max-width {
-  max-width: 1200px;
+.pointer {
+  cursor: pointer;
 }
 
-.max-height {
-  height: calc(100vh - 120px);
+.max-width {
+  max-width: 1200px;
 }
 
 .w-full {
@@ -72,6 +129,10 @@ input {
 .cl_dived {
   border-bottom: 1px solid #000000;
   opacity: 25%;
+}
+
+.max-height {
+  height: calc(100vh - 120px);
 }
 
 .relative {
@@ -86,14 +147,14 @@ input {
   text-align: center;
 }
 
-.max-height {
-  height: calc(100vh - 130px);
-}
-
 .cl_white {
   color: white;
 }
 
 .btn-font {
   font-family: "Raleway", sans-serif;
+}
+
+.display-block {
+  display: block;
 }
