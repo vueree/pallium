@@ -6,6 +6,10 @@ import { AUTH_TOKEN_KEY } from "@/use/useChat";
 const router = useRouter();
 
 const handleLogout = () => {
+  Cookies.remove(AUTH_TOKEN_KEY, {
+    path: "/",
+    domain: "api-pallium.onrender.com"
+  });
   Cookies.remove(AUTH_TOKEN_KEY, { path: "/", domain: "pallium.onrender.com" });
   Cookies.remove(AUTH_TOKEN_KEY, { path: "/", domain: "localhost" });
 

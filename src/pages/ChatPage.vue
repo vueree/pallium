@@ -74,7 +74,7 @@ watch(messages, scrollToBottom, { deep: true });
 </script>
 
 <template>
-  <main :class="[$style.wrapper, 'flex flex-column h-full']">
+  <main class="flex flex-column justify-between h-full max-width">
     <BtnBase
       v-show="messages.length"
       :btnClass="[$style['button-remove'], 'absolute']"
@@ -107,7 +107,7 @@ watch(messages, scrollToBottom, { deep: true });
     <div :class="[$style.inputArea, 'flex gap-12 items-center mx-auto w-full']">
       <textarea
         v-model="chatInputRef"
-        :class="[$style.textArea, 'rounded-10']"
+        :class="[$style.textArea, 'rounded-10 w-full']"
         placeholder="Введите сообщение..."
         rows="3"
         spellcheck="true"
@@ -124,35 +124,24 @@ watch(messages, scrollToBottom, { deep: true });
 </template>
 
 <style module>
-.wrapper {
-  position: relative;
-  max-width: 1200px;
-}
-
 .chatArea {
   overflow-y: auto;
-  padding-left: 16px;
-  padding-right: 16px;
 }
 
 .message {
   padding: 8px;
-  margin-bottom: 8px;
   border-radius: 8px;
   background-color: #f0f0f0;
   align-self: flex-start;
-  max-width: 70%;
 }
 
 .ownMessage {
   align-self: flex-end;
   background-color: #dcf8c6;
-  margin-right: 10px;
 }
 
 .messageUser {
   font-weight: bold;
-  margin-right: 8px;
 }
 
 .messageTime {
@@ -165,8 +154,6 @@ watch(messages, scrollToBottom, { deep: true });
   border: 1px solid rgba(173, 180, 230, 0.5);
   resize: none;
   padding: 8px 12px;
-  max-width: 1082px;
-  min-width: 1082px;
 }
 
 .inputArea {
@@ -182,6 +169,6 @@ watch(messages, scrollToBottom, { deep: true });
 
 .button-remove,
 .button-send {
-  width: 80px;
+  max-width: 80px;
 }
 </style>
