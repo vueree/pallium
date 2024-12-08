@@ -8,6 +8,12 @@ export interface IMessage {
   username: string;
   timestamp: string;
 }
+export interface IPaginatedMessages {
+  currentPage: number;
+  totalPages: number;
+  totalMessages: number;
+  messages: IMessage[];
+}
 
 export interface IChatState {
   input: string;

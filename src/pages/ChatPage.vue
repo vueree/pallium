@@ -1,10 +1,11 @@
 <script setup lang="ts">
-import { ref, onMounted, onUnmounted, watch, nextTick } from "vue";
+import { ref, onMounted, onUnmounted, watch, nextTick, computed } from "vue";
 import { storeToRefs } from "pinia";
 import { useRouter } from "vue-router";
 import BtnBase from "@/components/atom/BtnBase.vue";
 import { clearMessages, getMessages, token, getUsername } from "@/use/useChat";
 import { useWebSocketStore } from "@/stores/webSockets.store";
+import { getSocket } from "@/use/useWebSocket";
 
 const chatInputRef = ref("");
 const usernameRef = ref(getUsername());
@@ -15,6 +16,32 @@ const { messages, isConnected } = storeToRefs(webSocketStore);
 
 const router = useRouter();
 
+const currentPage = ref(1);
+const totalPages = ref();
+const messagesPerPage = 20; // Количество сообщений на страницу
+const loading = ref(false); // Флаг загрузки сообщений
+
+// Загрузка сообщений
+const loadMessages = async () => {
+  loading.value = true;
+  const responseTotalPages = await getMessages(
+    currentPage.value,
+    messagesPerPage
+  );
+  totalPages.value = responseTotalPages;
+  loading.value = false;
+};
+
+const requestMessageHistory = (page: number, messagesPerPage: number) => {
+  const socket = getSocket();
+
+  if (socket?.connected) {
+    socket.emit("get_message_history", { page, messagesPerPage });
+  } else {
+    console.error("🔴 Cannot request message history: socket not connected");
+  }
+};
+
 const scrollToBottom = () => {
   nextTick(() => {
     if (chatAreaRef.value) {
@@ -23,9 +50,21 @@ const scrollToBottom = () => {
   });
 };
 
+const handleScroll = async () => {
+  if (!chatAreaRef.value) return;
+
+  if (chatAreaRef.value.scrollTop === 0) {
+    if (currentPage.value < totalPages.value) {
+      currentPage.value += 1;
+      requestMessageHistory(currentPage.value, messagesPerPage);
+    }
+  }
+};
+
 const removeChat = async () => {
   if (token) {
     await clearMessages();
+    webSocketStore.messages = [];
   }
 };
 
@@ -63,7 +102,8 @@ onMounted(async () => {
   }
 
   webSocketStore.connect(token);
-  await getMessages();
+  await loadMessages();
+  scrollToBottom();
 });
 
 onUnmounted(() => {
@@ -81,11 +121,10 @@ watch(messages, scrollToBottom, { deep: true });
       label="Clear"
       @click="removeChat"
     />
-    <!-- <div :class="$style['chat-area-wrapper']">
-      <div :class="$style['gradient-top']" /> -->
     <div
       ref="chatAreaRef"
-      :class="[$style['chat-area'], 'flex flex-column w-full']"
+      :class="[$style['chat-area'], 'flex flex-column w-full ']"
+      @scroll="handleScroll"
     >
       <div
         v-for="(message, index) in messages"
@@ -103,8 +142,8 @@ watch(messages, scrollToBottom, { deep: true });
           {{ new Date(message.timestamp).toLocaleTimeString() }}
         </span>
       </div>
+      <div v-if="loading" class="loading-indicator">Loading...</div>
     </div>
-    <!-- </div> -->
 
     <div
       :class="[$style['input-area'], 'flex gap-12 items-center mx-auto w-full']"
@@ -128,36 +167,22 @@ watch(messages, scrollToBottom, { deep: true });
 </template>
 
 <style module>
-/* .chat-area-wrapper {
-  position: relative;
-  width: 100%;
-  height: 100%;
-}
-
-.gradient-top {
-  position: absolute;
-  top: 0;
-  left: 0;
-  width: 100%;
-  height: 100px;
-  background: linear-gradient(
-    to bottom,
-    rgba(255, 255, 255, 1),
-    rgba(255, 255, 255, 0)
-  );
-  pointer-events: none;
-  z-index: 2;
-*/
 .chat-area {
   overflow-y: auto;
 }
-/* z-index: 1; */
+
+.loading-indicator {
+  text-align: center;
+  margin: 10px 0;
+}
 
 .message {
   padding: 8px;
   border-radius: 8px;
   background-color: #f0f0f0;
   align-self: flex-start;
+  margin-top: 12px;
+  margin-bottom: 12px;
 }
 
 .own-message {

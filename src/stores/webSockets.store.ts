@@ -23,9 +23,16 @@ export const useWebSocketStore = defineStore("webSocket", () => {
       socket.off("message_history");
       socket.off("messages_cleared");
 
-      socket.on("message_history", (content: IMessage[]) => {
-        setMessages(content);
-      });
+      socket.on(
+        "message_history",
+        (data: { messages: IMessage[]; page: number; totalPages: number }) => {
+          if (data.page === 1) {
+            setMessages(data.messages); // Для первой страницы — перезаписываем
+          } else {
+            messages.value.push(...data.messages); // Для остальных — добавляем в начало
+          }
+        }
+      );
 
       socket.on("new_message", (content: IMessage) => {
         messages.value.push(content);

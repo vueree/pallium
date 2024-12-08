@@ -3,7 +3,7 @@ import axios from "axios";
 import Cookies from "js-cookie";
 import { getSocket, disconnectSocket } from "./useWebSocket";
 import { useWebSocketStore } from "@/stores/webSockets.store";
-import type { IMessage, IAuthResponse, IChatState } from "../types";
+import type { IPaginatedMessages, IAuthResponse, IChatState } from "../types";
 
 export const ANONYMOUS = "Anonymous";
 export const EMPTY_MESSAGE = "";
@@ -13,6 +13,8 @@ export const AUTH_TOKEN_KEY = "auth_token";
 const USERNAME_KEY = "username";
 const API_URL = import.meta.env.VITE_API_BASE_URL || "http://localhost:3000";
 const COOKIE_OPTIONS = { expires: 7, secure: true };
+
+export const totalPages = ref();
 
 export const setUsername = (username: string) =>
   localStorage.setItem(USERNAME_KEY, username);
@@ -167,15 +169,22 @@ export const useChatState = () => {
   };
 };
 
-export const getMessages = async () => {
+export const getMessages = async (page: number, limit: number) => {
   try {
-    const { data } = await axios.get<IMessage[]>(`${API_URL}/chat/messages`, {
-      headers: createAuthHeaders(token)
+    const { data } = await axios.get<{
+      messages: IMessage[];
+      totalPages: number;
+    }>(`${API_URL}/chat/messages`, {
+      headers: createAuthHeaders(token),
+      params: { page, limit } // Добавляем параметры пагинации
     });
+
     const store = useWebSocketStore();
-    store.setMessages(data);
+    store.setMessages(data.messages); // Устанавливаем сообщения
+    return (totalPages.value = data.totalPages); // Возвращаем общее количество страниц
   } catch (error) {
     handleApiError(error, "Error fetching messages");
+    return 0; // Возвращаем 0, если произошла ошибка
   }
 };
 
