@@ -81,26 +81,28 @@ watch(messages, scrollToBottom, { deep: true });
       label="Clear"
       @click="removeChat"
     />
-
-    <div
-      ref="chatAreaRef"
-      :class="[$style['chat-area'], 'flex flex-column w-full']"
-    >
+    <div :class="$style['chat-area-wrapper']">
+      <div :class="$style['gradient-top']" />
       <div
-        v-for="(message, index) in messages"
-        :key="`${message.timestamp}-${index}`"
-        :class="[
-          $style.message,
-          message.username === usernameRef ? $style['own-message'] : ''
-        ]"
+        ref="chatAreaRef"
+        :class="[$style['chat-area'], 'flex flex-column w-full']"
       >
-        <span :class="$style['message-user']">
-          {{ message.username || "Anonymous" }}
-        </span>
-        <span class="display-block">{{ message.message }}</span>
-        <span :class="[$style['message-time'], 'display-block']">
-          {{ new Date(message.timestamp).toLocaleTimeString() }}
-        </span>
+        <div
+          v-for="(message, index) in messages"
+          :key="`${message.timestamp}-${index}`"
+          :class="[
+            $style.message,
+            message.username === usernameRef ? $style['own-message'] : ''
+          ]"
+        >
+          <span :class="$style['message-user']">
+            {{ message.username || "Anonymous" }}
+          </span>
+          <span class="display-block">{{ message.message }}</span>
+          <span :class="[$style['message-time'], 'display-block']">
+            {{ new Date(message.timestamp).toLocaleTimeString() }}
+          </span>
+        </div>
       </div>
     </div>
 
@@ -110,7 +112,7 @@ watch(messages, scrollToBottom, { deep: true });
       <textarea
         v-model="chatInputRef"
         :class="[$style['text-area'], 'rounded-10 w-full']"
-        placeholder="Введите сообщение..."
+        placeholder="Enter your message..."
         rows="3"
         spellcheck="true"
         @keydown="handleKeydown"
@@ -126,8 +128,30 @@ watch(messages, scrollToBottom, { deep: true });
 </template>
 
 <style module>
+.chat-area-wrapper {
+  position: relative;
+  width: 100%;
+  height: 100%;
+}
+
+.gradient-top {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100px;
+  background: linear-gradient(
+    to bottom,
+    rgba(255, 255, 255, 1),
+    rgba(255, 255, 255, 0)
+  );
+  pointer-events: none; /* Чтобы градиент не блокировал взаимодействие */
+  z-index: 2; /* Чтобы градиент был поверх содержимого */
+}
+
 .chat-area {
   overflow-y: auto;
+  z-index: 1; /* Содержимое под градиентом */
 }
 
 .message {
@@ -164,8 +188,8 @@ watch(messages, scrollToBottom, { deep: true });
 }
 
 .button-remove {
-  top: -56px;
-  right: -6px;
+  top: 50px;
+  right: 50px;
   opacity: 0.1;
 }
 
