@@ -12,12 +12,10 @@ export const useWebSocketStore = defineStore("webSocket", () => {
   const isConnected = ref(false);
 
   const setMessages = (newMessages: IMessage[]) => {
-    console.log("Setting messages in store:", newMessages);
     messages.value = newMessages;
   };
 
   const setupSocketListeners = () => {
-    console.log("Setting up socket listeners");
     const socket = getSocket();
 
     if (socket) {
@@ -26,17 +24,14 @@ export const useWebSocketStore = defineStore("webSocket", () => {
       socket.off("messages_cleared");
 
       socket.on("message_history", (content: IMessage[]) => {
-        console.log("📥 Received message history:", content);
         setMessages(content);
       });
 
       socket.on("new_message", (content: IMessage) => {
-        console.log("📥 Received new message:", content);
         messages.value.push(content);
       });
 
       socket.on("messages_cleared", () => {
-        console.log("🗑️ Messages cleared");
         setMessages([]);
       });
 
@@ -49,11 +44,6 @@ export const useWebSocketStore = defineStore("webSocket", () => {
   };
 
   const connect = (token: string | undefined) => {
-    console.log(
-      "Connecting to WebSocket with token:",
-      token?.substring(0, 10) + "..."
-    );
-
     if (!token) {
       console.error("🔴 Token is required for WebSocket connection");
       return;
@@ -63,13 +53,11 @@ export const useWebSocketStore = defineStore("webSocket", () => {
 
     if (socket) {
       socket.on("connect", () => {
-        console.log("🟢 WebSocket connected in store");
         isConnected.value = true;
         setupSocketListeners();
       });
 
       socket.on("disconnect", () => {
-        console.log("🔴 WebSocket disconnected in store");
         isConnected.value = false;
       });
     } else {
@@ -78,11 +66,9 @@ export const useWebSocketStore = defineStore("webSocket", () => {
   };
 
   const sendMessage = (messageData: { message: string; username: string }) => {
-    console.log("📤 Attempting to send message:", messageData);
     const socket = getSocket();
 
     if (socket?.connected) {
-      console.log("📤 Emitting message");
       socket.emit("send_message", messageData);
     } else {
       console.error("🔴 Cannot send message: socket not connected");
@@ -90,7 +76,6 @@ export const useWebSocketStore = defineStore("webSocket", () => {
   };
 
   const disconnect = () => {
-    console.log("Disconnecting WebSocket");
     disconnectSocket();
     isConnected.value = false;
     messages.value = [];

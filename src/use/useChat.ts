@@ -9,11 +9,10 @@ export const ANONYMOUS = "Anonymous";
 export const EMPTY_MESSAGE = "";
 export const INPUT_WIDTH = "300px";
 export const AUTH_TOKEN_KEY = "auth_token";
+
 const USERNAME_KEY = "username";
 const API_URL = import.meta.env.VITE_API_BASE_URL || "http://localhost:3000";
 const COOKIE_OPTIONS = { expires: 7, secure: true };
-
-export const token = Cookies.get(AUTH_TOKEN_KEY);
 
 export const setUsername = (username: string) =>
   localStorage.setItem(USERNAME_KEY, username);
@@ -29,6 +28,8 @@ const setToken = (token: string | null) => {
     disconnectSocket();
   }
 };
+
+export const token = Cookies.get(AUTH_TOKEN_KEY);
 
 const createAuthHeaders = (token?: string) =>
   token ? { Authorization: `Bearer ${token}` } : {};
@@ -49,8 +50,8 @@ export const loginUser = async (
       password
     });
 
-    setToken(data.token);
-    setUsername(username);
+    await setToken(data.token);
+    await setUsername(username);
     router.push("/chat");
   } catch (error) {
     handleApiError(error, "Login error");
