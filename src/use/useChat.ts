@@ -52,7 +52,7 @@ export const loginUser = async (
 
     await setToken(data.token);
     await setUsername(username);
-    router.push("/chat");
+    if (data.token) router.push("/chat");
   } catch (error) {
     handleApiError(error, "Login error");
   }
@@ -72,11 +72,11 @@ export const registerUser = async (
       }
     );
 
-    setUsername(username);
+    await setUsername(username);
+    await setToken(data.token);
     if (data.token) {
-      setToken(data.token);
+      router.push("/chat");
     }
-    router.push("/chat");
   } catch (error) {
     handleApiError(error, "Registration error");
   }

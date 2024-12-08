@@ -84,30 +84,32 @@ watch(messages, scrollToBottom, { deep: true });
 
     <div
       ref="chatAreaRef"
-      :class="[$style.chatArea, 'flex flex-column w-full']"
+      :class="[$style['chat-area'], 'flex flex-column w-full']"
     >
       <div
         v-for="(message, index) in messages"
         :key="`${message.timestamp}-${index}`"
         :class="[
           $style.message,
-          message.username === usernameRef ? $style.ownMessage : ''
+          message.username === usernameRef ? $style['own-message'] : ''
         ]"
       >
-        <span :class="$style.messageUser">
+        <span :class="$style['message-user']">
           {{ message.username || "Anonymous" }}
         </span>
         <span class="display-block">{{ message.message }}</span>
-        <span :class="[$style.messageTime, 'display-block']">
+        <span :class="[$style['message-time'], 'display-block']">
           {{ new Date(message.timestamp).toLocaleTimeString() }}
         </span>
       </div>
     </div>
 
-    <div :class="[$style.inputArea, 'flex gap-12 items-center mx-auto w-full']">
+    <div
+      :class="[$style['input-area'], 'flex gap-12 items-center mx-auto w-full']"
+    >
       <textarea
         v-model="chatInputRef"
-        :class="[$style.textArea, 'rounded-10 w-full']"
+        :class="[$style['text-area'], 'rounded-10 w-full']"
         placeholder="Введите сообщение..."
         rows="3"
         spellcheck="true"
@@ -124,7 +126,7 @@ watch(messages, scrollToBottom, { deep: true });
 </template>
 
 <style module>
-.chatArea {
+.chat-area {
   overflow-y: auto;
 }
 
@@ -135,28 +137,28 @@ watch(messages, scrollToBottom, { deep: true });
   align-self: flex-start;
 }
 
-.ownMessage {
+.own-message {
   align-self: flex-end;
   background-color: #dcf8c6;
 }
 
-.messageUser {
+.message-user {
   font-weight: bold;
 }
 
-.messageTime {
+.message-time {
   font-size: 0.8em;
   color: #888;
   text-align: right;
 }
 
-.textArea {
+.text-area {
   border: 1px solid rgba(173, 180, 230, 0.5);
   resize: none;
   padding: 8px 12px;
 }
 
-.inputArea {
+.input-area {
   margin-bottom: 8px;
   margin-top: 8px;
 }

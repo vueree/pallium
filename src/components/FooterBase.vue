@@ -10,18 +10,21 @@ const { isConnected } = storeToRefs(webSocketStore);
   <footer
     :class="[$style.wrapper, 'flex items-center w-full max-width mx-auto']"
   >
-    <p :class="isConnected ? $style['cl-green'] : $style['cl-red']">
-      {{ isConnected ? "Connected" : "Disconnected" }}
+    <p>
+      the room
+      <span :class="isConnected ? $style['cl-green'] : $style['cl-red']">{{
+        isConnected ? "is connected" : "is not connected"
+      }}</span>
     </p>
   </footer>
 </template>
 
 <style module>
 .cl-green {
-  color: green;
+  color: #66b366;
 }
 
 .cl-red {
-  color: red;
+  color: #cc4f4f;
 }
 </style>
