@@ -3,43 +3,35 @@ import { ref, onMounted, onUnmounted, watch, nextTick, computed } from "vue";
 import { storeToRefs } from "pinia";
 import { useRouter } from "vue-router";
 import BtnBase from "@/components/atom/BtnBase.vue";
-import { clearMessages, getMessages, token, getUsername } from "@/use/useChat";
+import {
+  clearMessages,
+  token,
+  getMessages,
+  getUsername,
+  MESSAGE_PER_PAGE
+} from "@/use/useChat";
 import { useWebSocketStore } from "@/stores/webSockets.store";
-import { getSocket } from "@/use/useWebSocket";
 
 const chatInputRef = ref("");
 const usernameRef = ref(getUsername());
 const chatAreaRef = ref<HTMLElement | null>(null);
 
 const webSocketStore = useWebSocketStore();
-const { messages, isConnected } = storeToRefs(webSocketStore);
+const { messages, isConnected, currentPage, totalPages } =
+  storeToRefs(webSocketStore);
 
 const router = useRouter();
 
-const currentPage = ref(1);
-const totalPages = ref();
-const messagesPerPage = 20; // Количество сообщений на страницу
-const loading = ref(false); // Флаг загрузки сообщений
+const loading = ref(false);
 
-// Загрузка сообщений
 const loadMessages = async () => {
   loading.value = true;
   const responseTotalPages = await getMessages(
     currentPage.value,
-    messagesPerPage
+    MESSAGE_PER_PAGE
   );
   totalPages.value = responseTotalPages;
   loading.value = false;
-};
-
-const requestMessageHistory = (page: number, messagesPerPage: number) => {
-  const socket = getSocket();
-
-  if (socket?.connected) {
-    socket.emit("get_message_history", { page, messagesPerPage });
-  } else {
-    console.error("🔴 Cannot request message history: socket not connected");
-  }
 };
 
 const scrollToBottom = () => {
@@ -50,14 +42,28 @@ const scrollToBottom = () => {
   });
 };
 
-const handleScroll = async () => {
-  if (!chatAreaRef.value) return;
-
-  if (chatAreaRef.value.scrollTop === 0) {
-    if (currentPage.value < totalPages.value) {
-      currentPage.value += 1;
-      requestMessageHistory(currentPage.value, messagesPerPage);
+const handleScroll = () => {
+  if (chatAreaRef.value) {
+    const { scrollTop, scrollHeight, clientHeight } = chatAreaRef.value;
+    console.log(
+      `Scroll check: currentPage: ${webSocketStore.currentPage}, totalPages: ${webSocketStore.totalPages}`
+    );
+    if (scrollTop + clientHeight >= scrollHeight - 10) {
+      console.log("Attempting to load more messages.");
+      loadMoreMessages();
     }
+  }
+};
+
+const loadMoreMessages = () => {
+  if (webSocketStore.currentPage < webSocketStore.totalPages) {
+    webSocketStore.currentPage += 1;
+    webSocketStore.fetchMessageHistory(
+      webSocketStore.currentPage,
+      MESSAGE_PER_PAGE
+    );
+  } else {
+    console.log("No more pages to load.");
   }
 };
 
@@ -101,9 +107,14 @@ onMounted(async () => {
     return;
   }
 
-  webSocketStore.connect(token);
-  await loadMessages();
-  scrollToBottom();
+  try {
+    await webSocketStore.connect(token);
+    webSocketStore.fetchMessageHistory(currentPage.value, MESSAGE_PER_PAGE);
+    loadMessages();
+    scrollToBottom();
+  } catch (error) {
+    console.error("Error connecting to WebSocket:", error);
+  }
 });
 
 onUnmounted(() => {
@@ -111,6 +122,19 @@ onUnmounted(() => {
 });
 
 watch(messages, scrollToBottom, { deep: true });
+watch(
+  () => webSocketStore.messages,
+  (newMessages) => {
+    if (newMessages.length > 0) {
+      nextTick(() => {
+        if (chatAreaRef.value) {
+          chatAreaRef.value.scrollTop = chatAreaRef.value.scrollHeight;
+        }
+      });
+    }
+  },
+  { deep: true }
+);
 </script>
 
 <template>

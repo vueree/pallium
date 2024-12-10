@@ -1,47 +1,50 @@
-import { reactive } from "vue";
+import { reactive, Reactive } from "vue";
 import { io, Socket } from "socket.io-client";
 
-const state = reactive<{
+interface WebSocketState {
   socket: Socket | null;
   isConnected: boolean;
-}>({
+}
+
+const state: Reactive<WebSocketState> = reactive({
   socket: null,
   isConnected: false
 });
 
-export const initializeSocket = (token: string) => {
+export const initializeSocket = (token: string): Socket | null => {
   console.log("Initializing socket with token:", token);
 
-  state.socket = io("https://api-pallium.onrender.com/chat", {
+  const socket = io("https://api-pallium.onrender.com/chat", {
     auth: { token },
     reconnection: true,
     reconnectionDelay: 4000,
     reconnectionAttempts: Infinity
   });
 
-  state.socket.on("connect", () => {
-    console.log("🟢 WebSocket connected successfully");
+  socket.on("connect", () => {
+    console.log(" WebSocket connected successfully");
     state.isConnected = true;
   });
 
-  state.socket.on("connect_error", (error) => {
-    console.error("🔴 Connection error:", error.message);
+  socket.on("connect_error", (error) => {
+    console.error(" Connection error:", error.message);
   });
 
-  state.socket.on("disconnect", (reason) => {
-    console.log("🔴 WebSocket disconnected:", reason);
+  socket.on("disconnect", (reason) => {
+    console.log(" WebSocket disconnected:", reason);
     state.isConnected = false;
     if (reason === "io server disconnect") {
       console.log("Attempting to reconnect...");
-      state.socket?.connect();
+      socket.connect();
     }
   });
 
-  state.socket.on("error", (error) => {
-    console.error("🔴 WebSocket error:", error);
+  socket.on("error", (error) => {
+    console.error(" WebSocket error:", error);
   });
 
-  return state.socket;
+  state.socket = socket;
+  return socket;
 };
 
 export const disconnectSocket = () => {

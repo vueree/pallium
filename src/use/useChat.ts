@@ -9,6 +9,7 @@ export const ANONYMOUS = "Anonymous";
 export const EMPTY_MESSAGE = "";
 export const INPUT_WIDTH = "300px";
 export const AUTH_TOKEN_KEY = "auth_token";
+export const MESSAGE_PER_PAGE = 10;
 
 const USERNAME_KEY = "username";
 const API_URL = import.meta.env.VITE_API_BASE_URL || "http://localhost:3000";
@@ -52,9 +53,13 @@ export const loginUser = async (
       password
     });
 
-    await setToken(data.token);
-    await setUsername(username);
-    if (data.token) router.push("/chat");
+    setUsername(username);
+    if (data.token) {
+      setToken(data.token);
+      router.push("/chat");
+    } else {
+      console.warn("No token received");
+    }
   } catch (error) {
     handleApiError(error, "Login error");
   }
@@ -73,7 +78,6 @@ export const registerUser = async (
         password
       }
     );
-
     await setUsername(username);
     await setToken(data.token);
     if (data.token) {
@@ -136,7 +140,8 @@ export const useChatState = () => {
 
   const initializeChat = async (scrollCallback: () => void) => {
     try {
-      await getMessages();
+      const store = useWebSocketStore();
+      await getMessages(MESSAGE_PER_PAGE, store.currentPage);
       scrollCallback();
     } catch (error) {
       handleApiError(error, "Chat initialization error");
@@ -171,20 +176,26 @@ export const useChatState = () => {
 
 export const getMessages = async (page: number, limit: number) => {
   try {
+    const token = Cookies.get(AUTH_TOKEN_KEY);
+
+    if (!token) {
+      throw new Error("Token is not available");
+    }
+
     const { data } = await axios.get<{
       messages: IMessage[];
       totalPages: number;
     }>(`${API_URL}/chat/messages`, {
       headers: createAuthHeaders(token),
-      params: { page, limit } // Добавляем параметры пагинации
+      params: { page, limit }
     });
 
     const store = useWebSocketStore();
-    store.setMessages(data.messages); // Устанавливаем сообщения
-    return (totalPages.value = data.totalPages); // Возвращаем общее количество страниц
+    store.setMessages(data.messages);
+    return (totalPages.value = data.totalPages);
   } catch (error) {
     handleApiError(error, "Error fetching messages");
-    return 0; // Возвращаем 0, если произошла ошибка
+    return 0;
   }
 };
 
