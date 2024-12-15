@@ -1,12 +1,14 @@
 <script setup lang="ts">
-import { ref, onMounted, onUnmounted, watch, nextTick, computed } from "vue";
-import { storeToRefs } from "pinia";
+import { ref, onMounted, onUnmounted, watch, nextTick } from "vue";
 import { useRouter } from "vue-router";
 import BtnBase from "@/components/atom/BtnBase.vue";
+import LazyInfiniteLoader from "@/components/atom/InfiniteLoader.vue";
+import LazySimpleBar from "@/components/atom/SimpleBar.vue";
+import { type SimpleBarAPI } from "@/components/atom/SimpleBar.vue";
+import { storeToRefs } from "pinia";
 import {
   clearMessages,
   token,
-  getMessages,
   getUsername,
   MESSAGE_PER_PAGE
 } from "@/use/useChat";
@@ -21,49 +23,27 @@ const { messages, isConnected, currentPage, totalPages } =
   storeToRefs(webSocketStore);
 
 const router = useRouter();
-
 const loading = ref(false);
+const initialLoad = ref(false);
 
-const loadMessages = async () => {
-  loading.value = true;
-  const responseTotalPages = await getMessages(
-    currentPage.value,
-    MESSAGE_PER_PAGE
-  );
-  totalPages.value = responseTotalPages;
-  loading.value = false;
-};
+const loadMoreMessages = async () => {
+  console.log("Loading more messages...");
+  if (currentPage.value > 1 && !loading.value) {
+    loading.value = true;
+    const nextPage = currentPage.value - 1;
+    await webSocketStore.fetchMessageHistory(nextPage, MESSAGE_PER_PAGE);
 
-const scrollToBottom = () => {
-  nextTick(() => {
-    if (chatAreaRef.value) {
-      chatAreaRef.value.scrollTop = chatAreaRef.value.scrollHeight;
-    }
-  });
-};
-
-const handleScroll = () => {
-  if (chatAreaRef.value) {
-    const { scrollTop, scrollHeight, clientHeight } = chatAreaRef.value;
-    console.log(
-      `Scroll check: currentPage: ${webSocketStore.currentPage}, totalPages: ${webSocketStore.totalPages}`
-    );
-    if (scrollTop + clientHeight >= scrollHeight - 10) {
-      console.log("Attempting to load more messages.");
-      loadMoreMessages();
-    }
-  }
-};
-
-const loadMoreMessages = () => {
-  if (webSocketStore.currentPage < webSocketStore.totalPages) {
-    webSocketStore.currentPage += 1;
-    webSocketStore.fetchMessageHistory(
-      webSocketStore.currentPage,
-      MESSAGE_PER_PAGE
-    );
-  } else {
-    console.log("No more pages to load.");
+    nextTick(() => {
+      if (chatAreaRef.value) {
+        const currentScrollTop = chatAreaRef.value.scrollTop;
+        const addedHeight =
+          chatAreaRef.value.scrollHeight -
+          currentScrollTop -
+          chatAreaRef.value.clientHeight;
+        chatAreaRef.value.scrollTop = addedHeight;
+      }
+      loading.value = false;
+    });
   }
 };
 
@@ -101,19 +81,32 @@ const handleKeydown = (event: KeyboardEvent) => {
   }
 };
 
+console.log("LazyInfiniteLoader Props:", {
+  currentPage: currentPage.value,
+  totalPages: totalPages.value,
+  isFetching: loading.value,
+  chatAreaRef: chatAreaRef.value
+});
+
+const simpleBar = ref<SimpleBarAPI>();
+
 onMounted(async () => {
   if (!token) {
     router.push({ name: "Login" });
     return;
   }
 
+  initialLoad.value = true;
   try {
     await webSocketStore.connect(token);
-    webSocketStore.fetchMessageHistory(currentPage.value, MESSAGE_PER_PAGE);
-    loadMessages();
-    scrollToBottom();
+    await webSocketStore.fetchMessageHistory(
+      currentPage.value,
+      MESSAGE_PER_PAGE
+    );
   } catch (error) {
     console.error("Error connecting to WebSocket:", error);
+  } finally {
+    initialLoad.value = false;
   }
 });
 
@@ -121,17 +114,14 @@ onUnmounted(() => {
   webSocketStore.disconnect();
 });
 
-watch(messages, scrollToBottom, { deep: true });
 watch(
-  () => webSocketStore.messages,
-  (newMessages) => {
-    if (newMessages.length > 0) {
-      nextTick(() => {
-        if (chatAreaRef.value) {
-          chatAreaRef.value.scrollTop = chatAreaRef.value.scrollHeight;
-        }
-      });
-    }
+  messages,
+  () => {
+    nextTick(() => {
+      if (chatAreaRef.value && !initialLoad.value) {
+        chatAreaRef.value.scrollTop = chatAreaRef.value.scrollHeight;
+      }
+    });
   },
   { deep: true }
 );
@@ -145,29 +135,40 @@ watch(
       label="Clear"
       @click="removeChat"
     />
-    <div
-      ref="chatAreaRef"
-      :class="[$style['chat-area'], 'flex flex-column w-full ']"
-      @scroll="handleScroll"
-    >
+    <LazySimpleBar ref="simpleBar" class="chat-area-wrapper">
       <div
-        v-for="(message, index) in messages"
-        :key="`${message.timestamp}-${index}`"
-        :class="[
-          $style.message,
-          message.username === usernameRef ? $style['own-message'] : ''
-        ]"
+        ref="chatAreaRef"
+        :class="[$style['chat-area'], 'flex flex-column w-full']"
       >
-        <span :class="$style['message-user']">
-          {{ message.username || "Anonymous" }}
-        </span>
-        <span class="display-block">{{ message.message }}</span>
-        <span :class="[$style['message-time'], 'display-block']">
-          {{ new Date(message.timestamp).toLocaleTimeString() }}
-        </span>
+        <LazyInfiniteLoader
+          v-if="totalPages > 1"
+          :isFetching="loading"
+          :currentPage="currentPage"
+          :lastPage="totalPages"
+          :distance="100"
+          :root="simpleBar?.scrollElement"
+          @fetch="loadMoreMessages"
+        >
+          <div v-if="loading" class="loading-indicator">Loading...</div>
+        </LazyInfiniteLoader>
+        <div
+          v-for="(message, index) in messages"
+          :key="`${message.timestamp}-${index}`"
+          :class="[
+            $style.message,
+            message.username === usernameRef ? $style['own-message'] : ''
+          ]"
+        >
+          <span :class="$style['message-user']">
+            {{ message.username || "Anonymous" }}
+          </span>
+          <span class="display-block">{{ message.message }}</span>
+          <span :class="[$style['message-time'], 'display-block']">
+            {{ new Date(message.timestamp).toLocaleTimeString() }}
+          </span>
+        </div>
       </div>
-      <div v-if="loading" class="loading-indicator">Loading...</div>
-    </div>
+    </LazySimpleBar>
 
     <div
       :class="[$style['input-area'], 'flex gap-12 items-center mx-auto w-full']"
@@ -189,6 +190,12 @@ watch(
     </div>
   </main>
 </template>
+
+<style>
+.chat-area-wrapper {
+  height: calc(100vh - 200px);
+}
+</style>
 
 <style module>
 .chat-area {

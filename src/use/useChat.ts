@@ -23,7 +23,7 @@ export const setUsername = (username: string) =>
 export const getUsername = () =>
   localStorage.getItem(USERNAME_KEY) || ANONYMOUS;
 
-const setToken = (token: string | null) => {
+export const setToken = (token: string | null) => {
   if (token) {
     Cookies.set(AUTH_TOKEN_KEY, token, COOKIE_OPTIONS);
   } else {

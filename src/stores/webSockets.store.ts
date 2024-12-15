@@ -52,14 +52,14 @@ export const useWebSocketStore = defineStore("webSocket", () => {
     }
   };
 
-  const fetchMessageHistory = (page, perPage) => {
+  const fetchMessageHistory = (page: number, perPage: number) => {
     console.log(`[FRONT] Fetching message history:`, { page, perPage });
 
     const socket = getSocket();
     if (socket && socket.connected) {
       console.log(`[FRONT] Socket connected, emitting message_history`);
 
-      socket.emit("message_history", { page, perPage }, (response) => {
+      socket.emit("message_history", { page, perPage }, (response: any) => {
         console.log(`[FRONT] Message history response:`, response);
 
         if (response.success) {

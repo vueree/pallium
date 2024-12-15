@@ -21,9 +21,9 @@ useHead({
 </script>
 
 <template>
-  <HeaderBase />
-  <div class="cl_dived" />
-  <router-view class="mx-auto max-width max-height" />
-  <div class="cl_dived" />
-  <FooterBase />
+  <!-- <HeaderBase /> -->
+  <!-- <div class="cl_dived" /> -->
+  <router-view class="mx-auto max-width" />
+  <!-- <div class="cl_dived" /> -->
+  <!-- <FooterBase /> -->
 </template>

@@ -14,7 +14,9 @@
     "lint": "eslint . --ext .vue,.js,.jsx,.cjs,.mjs,.ts,.tsx,.cts,.mts --fix --ignore-path .gitignore"
   },
   "dependencies": {
+    "@types/simplebar": "^5.3.3",
     "@types/socket.io-client": "^3.0.0",
+    "@vueuse/core": "^12.0.0",
     "@vueuse/head": "^2.0.0",
     "axios": "^1.7.7",
     "bcryptjs": "^2.4.3",
@@ -23,6 +25,7 @@
     "js-cookie": "^3.0.5",
     "jsonwebtoken": "^9.0.2",
     "pinia": "^2.1.7",
+    "simplebar": "^6.3.0",
     "socket.io-client": "^4.8.1",
     "string-width": "^4.1.0",
     "strip-ansi": "^6.0.1",

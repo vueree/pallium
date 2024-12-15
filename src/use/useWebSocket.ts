@@ -14,7 +14,8 @@ const state: Reactive<WebSocketState> = reactive({
 export const initializeSocket = (token: string): Socket | null => {
   console.log("Initializing socket with token:", token);
 
-  const socket = io("https://api-pallium.onrender.com/chat", {
+  // const socket = io("https://api-pallium.onrender.com/chat", {
+  const socket = io("http://localhost:3000/chat", {
     auth: { token },
     reconnection: true,
     reconnectionDelay: 4000,
