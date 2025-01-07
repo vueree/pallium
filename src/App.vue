@@ -21,9 +21,15 @@ useHead({
 </script>
 
 <template>
-  <!-- <HeaderBase /> -->
-  <!-- <div class="cl_dived" /> -->
-  <router-view class="mx-auto max-width" />
-  <!-- <div class="cl_dived" /> -->
-  <!-- <FooterBase /> -->
+  <HeaderBase />
+  <div class="cl_dived" />
+  <router-view :class="['mx-auto max-width', $style['chat-area-wrapper']]" />
+  <div class="cl_dived" />
+  <FooterBase />
 </template>
+
+<style module>
+.chat-area-wrapper {
+  height: calc(100vh - 120px);
+}
+</style>

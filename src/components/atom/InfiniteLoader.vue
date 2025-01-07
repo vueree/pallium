@@ -1,38 +1,47 @@
-<script lang="ts" setup async="async">
-import { computed } from "vue";
+<script setup lang="ts">
+import { ref, onUnmounted } from "vue";
+import { useIntersectionObserver } from "@vueuse/core";
 
-interface Props {
+const props = defineProps<{
+  isFetching: boolean;
   currentPage: number;
   lastPage: number;
-  isFetching: boolean;
-  root?: HTMLElement | null;
-  distance?: number | string;
-  spinnerSize?: number;
-  disabled?: boolean;
-}
+}>();
 
-const props = withDefaults(defineProps<Props>(), {
-  root: null,
-  distance: 200,
-  spinnerSize: 30
+const emit = defineEmits<{
+  (e: "fetch"): void;
+}>();
+
+const sentinel = ref<HTMLElement | null>(null);
+
+const { stop } = useIntersectionObserver(
+  sentinel,
+  ([{ isIntersecting }]) => {
+    if (
+      isIntersecting &&
+      !props.isFetching &&
+      props.currentPage < props.lastPage
+    ) {
+      emit("fetch");
+    }
+  },
+  { threshold: 0.5 }
+);
+
+onUnmounted(() => {
+  stop();
 });
-
-const emit = defineEmits(["fetch"]);
-
-const isFinished = computed(() => props.currentPage === props.lastPage);
-
-const onIntersection = () =>
-  !isFinished.value && !props.isFetching && !props.disabled && emit("fetch");
 </script>
 
 <template>
-  <IntersectionObserver
-    v-show="!isFinished || isFetching"
-    v-bind="{ root, distance }"
-    class="flex justify-center items-center"
-    style="height: 100px"
-    @intersection="onIntersection"
-  >
+  <div ref="sentinel" class="sentinel">
     <slot />
-  </IntersectionObserver>
+  </div>
 </template>
+
+<style scoped>
+.sentinel {
+  width: 100%;
+  height: 20px;
+}
+</style>

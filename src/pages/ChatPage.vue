@@ -1,126 +1,99 @@
 <script setup lang="ts">
-import { ref, onMounted, onUnmounted, watch, nextTick } from "vue";
+import { ref, onMounted, onUnmounted, watch, nextTick, onUpdated } from "vue";
 import { useRouter } from "vue-router";
 import BtnBase from "@/components/atom/BtnBase.vue";
 import LazyInfiniteLoader from "@/components/atom/InfiniteLoader.vue";
-import LazySimpleBar from "@/components/atom/SimpleBar.vue";
-import { type SimpleBarAPI } from "@/components/atom/SimpleBar.vue";
 import { storeToRefs } from "pinia";
-import {
-  clearMessages,
-  token,
-  getUsername,
-  MESSAGE_PER_PAGE
-} from "@/use/useChat";
 import { useWebSocketStore } from "@/stores/webSockets.store";
-
-const chatInputRef = ref("");
-const usernameRef = ref(getUsername());
-const chatAreaRef = ref<HTMLElement | null>(null);
-
-const webSocketStore = useWebSocketStore();
-const { messages, isConnected, currentPage, totalPages } =
-  storeToRefs(webSocketStore);
+import { useChatState, fetchMessageHistory } from "@/use/useChat";
+import { usePaginationStore } from "@/use/usePaginationStore";
 
 const router = useRouter();
-const loading = ref(false);
-const initialLoad = ref(false);
+const chatAreaRef = ref<HTMLElement | null>(null);
+const chatInputRef = ref("");
 
-const loadMoreMessages = async () => {
-  console.log("Loading more messages...");
-  if (currentPage.value > 1 && !loading.value) {
-    loading.value = true;
-    const nextPage = currentPage.value - 1;
-    await webSocketStore.fetchMessageHistory(nextPage, MESSAGE_PER_PAGE);
+const loaderRef = ref<HTMLElement | null>(null);
+const isIntersecting = ref(false); // Видимость LazyInfiniteLoader
 
-    nextTick(() => {
-      if (chatAreaRef.value) {
-        const currentScrollTop = chatAreaRef.value.scrollTop;
-        const addedHeight =
-          chatAreaRef.value.scrollHeight -
-          currentScrollTop -
-          chatAreaRef.value.clientHeight;
-        chatAreaRef.value.scrollTop = addedHeight;
+const webSocketStore = useWebSocketStore();
+const { messages, isConnected, token } = storeToRefs(webSocketStore);
+
+const {
+  handleKeyPress,
+  handleMessageSend,
+  initializeChat,
+  loadMoreMessages,
+  clearMessages
+} = useChatState();
+
+const { totalPages, currentPage, loading } = usePaginationStore();
+
+onUpdated(() => {
+  if (loaderRef.value) {
+    const observer = new IntersectionObserver(
+      ([entry]) => {
+        isIntersecting.value = entry.isIntersecting;
+
+        if (isIntersecting.value && !loading && currentPage < totalPages) {
+          loadMoreMessages(); // Загружаем дополнительные сообщения
+        }
+      },
+      {
+        rootMargin: "0px",
+        threshold: 0.1 // Когда элемент виден на 10%
       }
-      loading.value = false;
+    );
+    observer.observe(loaderRef.value);
+
+    // Очистка observer при размонтировании
+    onUnmounted(() => {
+      observer.disconnect();
     });
   }
-};
-
-const removeChat = async () => {
-  if (token) {
-    await clearMessages();
-    webSocketStore.messages = [];
-  }
-};
-
-const sendMessage = () => {
-  if (!isConnected.value) {
-    console.error("WebSocket is not connected");
-    return;
-  }
-
-  const messageText = chatInputRef.value.trim();
-  if (!messageText) {
-    console.warn("Cannot send empty message");
-    return;
-  }
-
-  webSocketStore.sendMessage({
-    message: messageText,
-    username: usernameRef.value
-  });
-
-  chatInputRef.value = "";
-};
-
-const handleKeydown = (event: KeyboardEvent) => {
-  if (event.key === "Enter" && !event.shiftKey) {
-    event.preventDefault();
-    sendMessage();
-  }
-};
-
-console.log("LazyInfiniteLoader Props:", {
-  currentPage: currentPage.value,
-  totalPages: totalPages.value,
-  isFetching: loading.value,
-  chatAreaRef: chatAreaRef.value
 });
-
-const simpleBar = ref<SimpleBarAPI>();
 
 onMounted(async () => {
-  if (!token) {
-    router.push({ name: "Login" });
+  await nextTick(); // Дожидаемся, пока обновится DOM и токен
+  console.log("Token after nextTick:", token.value);
+  if (!token.value) {
+    console.error("🚨 Token is missing, redirecting to Login...");
+    nextTick(() => {
+      router.push({ name: "Login" });
+    });
     return;
   }
 
-  initialLoad.value = true;
-  try {
-    await webSocketStore.connect(token);
-    await webSocketStore.fetchMessageHistory(
-      currentPage.value,
-      MESSAGE_PER_PAGE
-    );
-  } catch (error) {
-    console.error("Error connecting to WebSocket:", error);
-  } finally {
-    initialLoad.value = false;
-  }
+  // Подключение WebSocket через store
+  webSocketStore.connect("wss://localhost:3000/chat");
+
+  // Когда WebSocket соединение установлено
+  watch(
+    isConnected,
+    async (connected) => {
+      if (connected) {
+        await initializeChat(() => {
+          chatAreaRef.value?.scrollTo({ top: chatAreaRef.value.scrollHeight });
+        });
+        await fetchMessageHistory(currentPage, totalPages); // Загрузка истории сообщений
+      }
+    },
+    { immediate: true }
+  );
+
+  // Обработка входящих сообщений
+  webSocketStore.socket?.addEventListener("message", (event: any) => {
+    const data = JSON.parse(event.data);
+    console.log("New message received:", data);
+    messages.value.push(data); // Добавление сообщения в список
+  });
 });
 
-onUnmounted(() => {
-  webSocketStore.disconnect();
-});
-
+// Автоматический скролл при изменении сообщений
 watch(
   messages,
   () => {
     nextTick(() => {
-      if (chatAreaRef.value && !initialLoad.value) {
-        chatAreaRef.value.scrollTop = chatAreaRef.value.scrollHeight;
-      }
+      chatAreaRef.value?.scrollTo({ top: chatAreaRef.value.scrollHeight });
     });
   },
   { deep: true }
@@ -128,48 +101,55 @@ watch(
 </script>
 
 <template>
-  <main class="flex flex-column justify-between h-full max-width">
+  <main v-if="token" class="flex flex-col justify-between h-full max-width">
+    <!-- Кнопка очистки сообщений -->
     <BtnBase
-      v-show="messages.length"
+      v-if="messages && messages.length > 0"
       :btnClass="[$style['button-remove'], 'absolute']"
       label="Clear"
-      @click="removeChat"
+      @click="clearMessages"
     />
-    <LazySimpleBar ref="simpleBar" class="chat-area-wrapper">
-      <div
-        ref="chatAreaRef"
-        :class="[$style['chat-area'], 'flex flex-column w-full']"
-      >
-        <LazyInfiniteLoader
-          v-if="totalPages > 1"
-          :isFetching="loading"
-          :currentPage="currentPage"
-          :lastPage="totalPages"
-          :distance="100"
-          :root="simpleBar?.scrollElement"
-          @fetch="loadMoreMessages"
-        >
-          <div v-if="loading" class="loading-indicator">Loading...</div>
-        </LazyInfiniteLoader>
-        <div
-          v-for="(message, index) in messages"
-          :key="`${message.timestamp}-${index}`"
-          :class="[
-            $style.message,
-            message.username === usernameRef ? $style['own-message'] : ''
-          ]"
-        >
-          <span :class="$style['message-user']">
-            {{ message.username || "Anonymous" }}
-          </span>
-          <span class="display-block">{{ message.message }}</span>
-          <span :class="[$style['message-time'], 'display-block']">
-            {{ new Date(message.timestamp).toLocaleTimeString() }}
-          </span>
-        </div>
-      </div>
-    </LazySimpleBar>
 
+    <!-- Область сообщений -->
+    <div
+      ref="chatAreaRef"
+      :class="[$style['chat-area'], 'flex flex-column w-full']"
+    >
+      <!-- Компонент LazyInfiniteLoader -->
+      <LazyInfiniteLoader
+        ref="loaderRef"
+        v-if="totalPages > 1"
+        :isFetching="loading"
+        :currentPage="currentPage"
+        :lastPage="totalPages"
+        :distance="100"
+        @fetch="loadMoreMessages"
+      >
+        <div v-if="loading" class="loading-indicator">Loading...</div>
+      </LazyInfiniteLoader>
+
+      <!-- Список сообщений -->
+      <div
+        v-for="(message, index) in messages"
+        :key="`${message.timestamp}-${index}`"
+        :class="[
+          $style.message,
+          message.username === webSocketStore.username
+            ? $style['own-message']
+            : ''
+        ]"
+      >
+        <span :class="$style['message-user']">{{
+          message.username || "Anonymous"
+        }}</span>
+        <span class="display-block">{{ message.message }}</span>
+        <span :class="[$style['message-time'], 'display-block']">
+          {{ new Date(message.timestamp).toLocaleTimeString() }}
+        </span>
+      </div>
+    </div>
+
+    <!-- Область ввода -->
     <div
       :class="[$style['input-area'], 'flex gap-12 items-center mx-auto w-full']"
     >
@@ -179,23 +159,22 @@ watch(
         placeholder="Enter your message..."
         rows="3"
         spellcheck="true"
-        @keydown="handleKeydown"
+        @keydown="
+          (event) =>
+            handleKeyPress(event, () =>
+              handleMessageSend(chatInputRef, () => (chatInputRef = ''))
+            )
+        "
       />
       <BtnBase
         :btnClass="$style['button-send']"
         label="Send"
         :disabled="!isConnected"
-        @click="sendMessage"
+        @click="handleMessageSend(chatInputRef, () => (chatInputRef = ''))"
       />
     </div>
   </main>
 </template>
-
-<style>
-.chat-area-wrapper {
-  height: calc(100vh - 200px);
-}
-</style>
 
 <style module>
 .chat-area {
@@ -239,7 +218,8 @@ watch(
 
 .input-area {
   margin-bottom: 8px;
-  margin-top: 8px;
+  margin-top: auto;
+  width: 100%;
 }
 
 .button-remove {

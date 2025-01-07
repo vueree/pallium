@@ -28,7 +28,7 @@ const handleLogin = () => handleSubmit(router);
         <InputBase
           v-model="state.username"
           inputClass="rounded-10"
-          :width="INPUT_WIDTH"
+          :width="String(INPUT_WIDTH)"
           type="text"
           placeholder="Username"
           required
@@ -37,7 +37,7 @@ const handleLogin = () => handleSubmit(router);
         <InputBase
           v-model="state.password"
           inputClass="rounded-10"
-          :width="INPUT_WIDTH"
+          :width="String(INPUT_WIDTH)"
           type="password"
           placeholder="Password"
           required

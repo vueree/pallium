@@ -16,7 +16,7 @@
   "dependencies": {
     "@types/simplebar": "^5.3.3",
     "@types/socket.io-client": "^3.0.0",
-    "@vueuse/core": "^12.0.0",
+    "@vueuse/core": "^12.3.0",
     "@vueuse/head": "^2.0.0",
     "axios": "^1.7.7",
     "bcryptjs": "^2.4.3",
@@ -38,7 +38,7 @@
     "@tsconfig/node20": "^20.1.4",
     "@types/js-cookie": "^3.0.6",
     "@types/jsdom": "^21.1.7",
-    "@types/node": "^22.10.1",
+    "@types/node": "^22.10.5",
     "@types/vue": "^2.0.0",
     "@vitejs/plugin-vue": "^5.2.1",
     "@vue/eslint-config-typescript": "^13.0.0",

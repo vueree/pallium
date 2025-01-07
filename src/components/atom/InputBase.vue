@@ -46,6 +46,7 @@ const inputId = computed(
       :name="name"
       :placeholder="placeholder"
       :required="required"
+      :width="`${width}`"
     />
     <slot :class="$style.slot" />
   </div>

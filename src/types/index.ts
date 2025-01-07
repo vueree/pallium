@@ -1,9 +1,12 @@
+import { Socket } from "socket.io-client";
+
 export interface IAuthResponse {
   token: string;
   message?: string;
 }
 
 export interface IMessage {
+  id?: string;
   message: string;
   username: string;
   timestamp: string;
@@ -28,4 +31,16 @@ export interface IWebSocketState {
 export interface IWebSocketEvents {
   onMessage?: (message: IMessage) => void;
   onConnectionChange?: (status: boolean) => void;
+}
+
+export interface WebSocketState {
+  socket: Socket | null;
+  isConnected: boolean;
+}
+
+export interface AuthState {
+  username: string;
+  password: string;
+  isLoading: boolean;
+  error: string | null;
 }

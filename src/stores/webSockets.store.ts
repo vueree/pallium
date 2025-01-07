@@ -1,160 +1,147 @@
 import { defineStore } from "pinia";
-import { ref } from "vue";
-import {
-  initializeSocket,
-  disconnectSocket,
-  getSocket
-} from "../use/useWebSocket";
+import { useRouter } from "vue-router";
+import { ref, watch, nextTick } from "vue";
 import type { IMessage } from "../types";
 
-export const useWebSocketStore = defineStore("webSocket", () => {
-  const messages = ref<IMessage[]>([]);
-  const isConnected = ref(false);
-  const currentPage = ref(1);
-  const totalPages = ref(0);
+export const useWebSocketStore = defineStore("webSocketStore", () => {
+  const token = ref<string | null>(null); // Токен WebSocket
+  const messages = ref<IMessage[]>([]); // Сообщения
+  const isConnected = ref(false); // Состояние WebSocket
+  const username = ref<string>(""); // Добавляем свойство username
+  const socket = ref<WebSocket | null>(null);
+  const router = useRouter();
 
-  const connect = (token: string | undefined): Promise<void> => {
-    return new Promise((resolve, reject) => {
-      if (!token) {
-        console.error(" Token is required for WebSocket connection");
-        reject();
-        return;
-      }
+  let reconnectTimeout: NodeJS.Timeout | null = null; // Таймаут для переподключения
 
-      const socket = initializeSocket(token);
+  // Установка token
+  const setToken = (newToken: string) => {
+    const maskedToken = newToken.slice(0, 10) + "..." + newToken.slice(-4); // Маскировка токена
+    console.log("🚀 ~ setToken ~ newToken:", maskedToken);
+    token.value = newToken;
 
-      if (socket) {
-        socket.on("connect", () => {
-          isConnected.value = true;
-          console.log("WebSocket connected");
-          setupSocketListeners();
-          resolve();
-        });
-
-        socket.on("disconnect", () => {
-          isConnected.value = false;
-          console.log("WebSocket disconnected");
-        });
-      } else {
-        console.error(" Failed to initialize socket");
-        reject();
+    // Используем nextTick, чтобы дождаться следующего цикла обновления
+    nextTick(() => {
+      console.log("Token after nextTick:", token.value);
+      if (!token.value) {
+        router.push({ name: "Login" }); // Перенаправление, если токен пустой
       }
     });
   };
 
-  const disconnect = () => {
-    const socket = getSocket();
-    if (socket) {
-      disconnectSocket();
+  const addMessages = (newMessages: IMessage[]) => {
+    const uniqueMessages = newMessages.filter(
+      (msg) => !messages.value.find((m) => m.id === msg.id)
+    );
+    messages.value = [...uniqueMessages, ...messages.value];
+  };
+
+  const addMessage = (newMessage: IMessage) => {
+    console.log("🚀 ~ addMessage ~ newMessage:", newMessage);
+    if (!messages.value.find((msg) => msg.id === newMessage.id)) {
+      messages.value.push(newMessage);
+    }
+  };
+
+  const clearMessages = () => {
+    console.log("🚀 ~ clearMessages ~ clearing all messages");
+    messages.value = [];
+  };
+
+  const connect = (token: string) => {
+    if (!token) {
+      console.error("Token is required for WebSocket connection");
+      return;
+    }
+
+    const url = "ws://localhost:3000/chat"; // Используем токен в URL
+
+    socket.value = new WebSocket(url);
+
+    socket.value.onopen = () => {
+      isConnected.value = true;
+      console.log("🚀 ~ WebSocket connected");
+      if (reconnectTimeout) {
+        clearTimeout(reconnectTimeout); // Сбрасываем таймаут переподключения
+        reconnectTimeout = null;
+      }
+    };
+
+    socket.value.onmessage = (event) => {
+      try {
+        const data = JSON.parse(event.data);
+        console.log("🚀 ~ WebSocket onmessage ~ data:", data);
+        if (Array.isArray(data)) {
+          addMessages(data); // Если получен массив сообщений
+        } else {
+          addMessage(data); // Если получено одно сообщение
+        }
+      } catch (error) {
+        console.error("🚀 ~ WebSocket onmessage error:", error);
+      }
+    };
+
+    socket.value.onerror = (error) => {
+      console.error("🚀 ~ WebSocket error:", error);
+    };
+
+    socket.value.onclose = () => {
       isConnected.value = false;
-      messages.value = [];
-      console.log("WebSocket disconnected manually");
-    }
+      socket.value = null;
+      console.log("🚀 ~ WebSocket disconnected");
+
+      // Попытка переподключения через 5 секунд
+      if (!reconnectTimeout) {
+        reconnectTimeout = setTimeout(() => {
+          console.log("🚀 ~ Reconnecting WebSocket...");
+          connect(token); // Повторное подключение
+        }, 5000);
+      }
+    };
   };
 
-  const fetchMessageHistory = (page: number, perPage: number) => {
-    console.log(`[FRONT] Fetching message history:`, { page, perPage });
+  // Отключение WebSocket
+  const disconnect = () => {
+    console.log("🚀 ~ disconnect ~ Disconnecting WebSocket...");
 
-    const socket = getSocket();
-    if (socket && socket.connected) {
-      console.log(`[FRONT] Socket connected, emitting message_history`);
-
-      socket.emit("message_history", { page, perPage }, (response: any) => {
-        console.log(`[FRONT] Message history response:`, response);
-
-        if (response.success) {
-          if (page > currentPage.value) {
-            console.log(`[FRONT] Appending messages for page ${page}`);
-            messages.value.push(...response.messages);
-          } else {
-            console.log(`[FRONT] Replacing messages for page ${page}`);
-            messages.value = response.messages;
-          }
-
-          currentPage.value = page;
-          totalPages.value = response.totalPages;
-
-          console.log(`[FRONT] Updated state:`, {
-            currentPage: currentPage.value,
-            totalPages: totalPages.value,
-            messagesCount: messages.value.length
-          });
-        } else {
-          console.error(`[FRONT] Failed to fetch messages:`, response.error);
-        }
-      });
+    // Проверка, есть ли активное соединение
+    if (socket.value && isConnected.value) {
+      socket.value.close();
+      socket.value = null;
+      isConnected.value = false;
+      console.log("🚀 ~ WebSocket disconnected");
     } else {
-      console.error(
-        "[FRONT] Cannot fetch message history: socket not connected"
-      );
+      console.log("🚀 ~ disconnect ~ No active WebSocket connection");
+    }
+
+    // Очищаем таймаут переподключения, если он существует
+    if (reconnectTimeout) {
+      clearTimeout(reconnectTimeout);
+      reconnectTimeout = null;
     }
   };
 
-  const setMessages = (newMessages: IMessage[]) => {
-    messages.value = newMessages;
-  };
-
-  const setupSocketListeners = () => {
-    const socket = getSocket();
-
-    if (socket) {
-      socket.off("new_message");
-      socket.off("message_history");
-      socket.off("messages_cleared");
-
-      socket.on("message_history", (data) => {
-        if (data.success) {
-          console.log(
-            `Received page ${data.page}, total pages now: ${data.totalPages}`
-          );
-
-          if (data.page > currentPage.value) {
-            data.messages.forEach((message: any) =>
-              messages.value.push(message)
-            );
-          } else if (data.page === 1) {
-            messages.value = data.messages;
-          }
-          // currentPage.value = data.page;
-          totalPages.value = data.totalPages;
-        } else {
-          console.error("Failed to fetch message history:", data.error);
-        }
-      });
-
-      socket.on("new_message", (content: IMessage) => {
-        messages.value.push(content);
-      });
-
-      socket.on("messages_cleared", () => {
-        setMessages([]);
-      });
-
-      socket.on("error", (error: Error) => {
-        console.error(" Socket error in store:", error);
-      });
-    }
-  };
-
-  const sendMessage = (messageData: { message: string; username: string }) => {
-    const socket = getSocket();
-
-    if (socket?.connected) {
-      socket.emit("send_message", messageData);
-    } else {
-      console.error(" Cannot send message: socket not connected");
-    }
-  };
+  watch(
+    token,
+    (newToken) => {
+      if (!newToken) {
+        console.log("🚨 Token is missing, redirecting to Login...");
+        router.push({ name: "Login" });
+      }
+    },
+    { immediate: true }
+  );
 
   return {
+    token, // Токен WebSocket
     messages,
     isConnected,
-    currentPage,
-    totalPages,
     connect,
     disconnect,
-    sendMessage,
-    fetchMessageHistory,
-    setMessages
+    addMessages,
+    addMessage,
+    clearMessages,
+    username,
+    setToken,
+    socket
   };
 });

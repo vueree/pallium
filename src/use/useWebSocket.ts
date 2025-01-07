@@ -1,20 +1,41 @@
-import { reactive, Reactive } from "vue";
+import { reactive } from "vue";
 import { io, Socket } from "socket.io-client";
+import type { WebSocketState } from "../types";
 
-interface WebSocketState {
-  socket: Socket | null;
-  isConnected: boolean;
-}
-
-const state: Reactive<WebSocketState> = reactive({
+const state = reactive<WebSocketState>({
   socket: null,
   isConnected: false
 });
 
-export const initializeSocket = (token: string): Socket | null => {
-  console.log("Initializing socket with token:", token);
+const setupSocketListeners = (socket: Socket) => {
+  socket.on("connect", () => {
+    state.isConnected = true;
+    console.log("[WebSocket] Connected successfully");
+  });
 
-  // const socket = io("https://api-pallium.onrender.com/chat", {
+  socket.on("disconnect", (reason: string) => {
+    state.isConnected = false;
+    console.log("[WebSocket] Disconnected", { reason });
+
+    if (reason === "io server disconnect") {
+      console.log("[WebSocket] Attempting to reconnect...");
+      socket.connect(); // Пытаемся переподключиться
+    }
+  });
+
+  socket.on("error", (error: any) => {
+    console.error("[WebSocket] Error", error);
+  });
+};
+
+export const initializeSocket = (token: string): Socket | null => {
+  if (!token) {
+    console.error("[WebSocket] Token is required for initialization");
+    return null;
+  }
+
+  console.log("[WebSocket] Initializing connection with token:", token);
+
   const socket = io("http://localhost:3000/chat", {
     auth: { token },
     reconnection: true,
@@ -22,42 +43,29 @@ export const initializeSocket = (token: string): Socket | null => {
     reconnectionAttempts: Infinity
   });
 
-  socket.on("connect", () => {
-    console.log(" WebSocket connected successfully");
-    state.isConnected = true;
-  });
-
-  socket.on("connect_error", (error) => {
-    console.error(" Connection error:", error.message);
-  });
-
-  socket.on("disconnect", (reason) => {
-    console.log(" WebSocket disconnected:", reason);
-    state.isConnected = false;
-    if (reason === "io server disconnect") {
-      console.log("Attempting to reconnect...");
-      socket.connect();
-    }
-  });
-
-  socket.on("error", (error) => {
-    console.error(" WebSocket error:", error);
-  });
-
+  setupSocketListeners(socket);
   state.socket = socket;
+
+  // Логируем состояние соединения после установки слушателей
+  console.log("[WebSocket] Attempting to connect...");
   return socket;
 };
 
-export const disconnectSocket = () => {
-  console.log("Manually disconnecting socket");
-  state.socket?.disconnect();
-  state.socket = null;
-  state.isConnected = false;
+export const disconnectSocket = (): void => {
+  if (state.socket) {
+    console.log("[WebSocket] Disconnecting socket...");
+    state.socket.disconnect();
+    state.socket = null;
+    state.isConnected = false;
+    console.log("[WebSocket] Socket disconnected");
+  }
 };
 
 export const getSocket = (): Socket | null => {
-  console.log("Getting socket, connected:", state.isConnected);
-  return state.socket;
+  return state.socket as Socket | null;
 };
 
-export const useSocketStatus = () => state.isConnected;
+export const useSocketStatus = (): boolean => {
+  console.log("[WebSocket] Current connection status:", state.isConnected);
+  return state.isConnected;
+};

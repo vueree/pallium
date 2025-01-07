@@ -1,13 +1,7 @@
 import { ref } from "vue";
-import type { Router } from "vue-router";
 import { loginUser, registerUser } from "@/use/useChat";
-
-interface AuthState {
-  username: string;
-  password: string;
-  isLoading: boolean;
-  error: string | null;
-}
+import type { Router } from "vue-router";
+import type { AuthState } from "../types";
 
 export const useAuth = (isRegistration = false) => {
   const state = ref<AuthState>({
