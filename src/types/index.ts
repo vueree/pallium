@@ -11,6 +11,14 @@ export interface IMessage {
   username: string;
   timestamp: string;
 }
+
+export interface IServerToClientEvents {
+  connect: () => void;
+  disconnect: (reason: string) => void;
+  new_message: (message: IMessage) => void;
+  error: (error: { message: string }) => void;
+}
+
 export interface IPaginatedMessages {
   currentPage: number;
   totalPages: number;

@@ -1,18 +1,19 @@
-import { onUnmounted } from "vue";
-import { AxiosError } from "axios";
-import { useRouter } from "vue-router";
 import axios from "axios";
 import Cookies from "js-cookie";
+import { onUnmounted } from "vue";
+import { storeToRefs } from "pinia";
+import { useRouter } from "vue-router";
 import { useWebSocketStore } from "@/stores/webSockets.store";
 import { usePaginationStore } from "@/use/usePaginationStore";
 import { useError } from "@/use/useError";
+import type { AxiosError } from "axios";
 import type { AuthCredentials, AuthResponse, IMessage } from "@/types";
 
 const router = useRouter();
 
 export const ANONYMOUS = "Anonymous";
 export const AUTH_TOKEN_KEY = "auth_token";
-export const MESSAGE_PER_PAGE = 20;
+export const MESSAGE_PER_PAGE = 15;
 export const INPUT_WIDTH = 300;
 
 const API_URL = "http://localhost:3000";
@@ -264,6 +265,8 @@ export const initializeChat = async (scrollCallback: () => void) => {
 };
 
 export const loadMoreMessages = async (): Promise<void> => {
+  const pagination = usePaginationStore();
+  const { currentPage, totalPages, loading } = storeToRefs(pagination);
   if (
     loading.value ||
     !totalPages.value ||

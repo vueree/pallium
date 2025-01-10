@@ -2,7 +2,7 @@
 import { ref, onMounted, onUnmounted, watch, nextTick, onUpdated } from "vue";
 import { useRouter } from "vue-router";
 import BtnBase from "@/components/atom/BtnBase.vue";
-// import LazyInfiniteLoader from "@/components/atom/InfiniteLoader.vue";
+import LazyInfiniteLoader from "@/components/atom/InfiniteLoader.vue";
 import { storeToRefs } from "pinia";
 import { useWebSocketStore } from "@/stores/webSockets.store";
 import { useChatState } from "@/use/useChat";
@@ -12,15 +12,16 @@ const router = useRouter();
 const chatAreaRef = ref<HTMLElement | null>(null);
 const chatInputRef = ref("");
 
-// const loaderRef = ref<HTMLElement | null>(null);
+const loaderRef = ref<HTMLElement | null>(null);
 
 const webSocketStore = useWebSocketStore();
 const { messages, isConnected, token } = storeToRefs(webSocketStore);
 
-const { handleKeyPress, handleMessageSend, clearMessages } = useChatState();
+const { handleKeyPress, handleMessageSend, clearMessages, loadMoreMessages } =
+  useChatState();
 
 const paginationStore = usePaginationStore();
-// const { totalPages, currentPage, loading } = storeToRefs(paginationStore);
+const { totalPages, currentPage, loading } = storeToRefs(paginationStore);
 
 onMounted(async () => {
   if (!token.value) {
@@ -42,7 +43,7 @@ watch(
 </script>
 
 <template>
-  <main v-if="token" class="flex flex-col justify-between h-full max-width">
+  <main class="flex flex-column justify-between h-full max-width">
     <BtnBase
       v-if="messages && messages.length > 0"
       :btnClass="[$style['button-remove'], 'absolute']"
@@ -54,7 +55,7 @@ watch(
       ref="chatAreaRef"
       :class="[$style['chat-area'], 'flex flex-column w-full']"
     >
-      <!-- <LazyInfiniteLoader
+      <LazyInfiniteLoader
         ref="loaderRef"
         v-if="totalPages > 1"
         :isFetching="loading"
@@ -62,7 +63,7 @@ watch(
         :lastPage="totalPages"
         :distance="100"
         @fetch="loadMoreMessages"
-      /> -->
+      />
 
       <div
         v-for="(message, index) in messages"

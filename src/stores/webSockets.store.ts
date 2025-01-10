@@ -14,7 +14,6 @@ export const useWebSocketStore = defineStore("webSocketStore", () => {
 
   const setToken = (newToken: string) => {
     const maskedToken = newToken.slice(0, 10) + "..." + newToken.slice(-4);
-    console.log("🚀 ~ setToken ~ newToken:", maskedToken);
     token.value = newToken;
 
     nextTick(() => {
@@ -61,7 +60,6 @@ export const useWebSocketStore = defineStore("webSocketStore", () => {
     if (socketInstance) {
       isConnected.value = true;
 
-      // Слушаем только новые сообщения
       socketInstance.on("new_message", (message: IMessage) => {
         addMessage(message);
       });
