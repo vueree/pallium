@@ -1,21 +1,20 @@
 import { ref } from "vue";
 import { defineStore } from "pinia";
+import type { Ref } from "vue";
 
 export const usePaginationStore = defineStore("paginationStore", () => {
-  const currentPage = ref(1); // Текущая страница пагинации
-  const totalPages = ref(0); // Общее количество страниц
-  const loading = ref(false); // Состояние загрузки
+  const currentPage: Ref<number> = ref(1);
+  const totalPages: Ref<number> = ref(1);
+  const loading: Ref<boolean> = ref(false);
 
-  // Установка пагинации
   const setPagination = (page: number, total: number) => {
     currentPage.value = page;
     totalPages.value = total;
   };
 
-  // Сброс пагинации
   const resetPagination = () => {
     currentPage.value = 1;
-    totalPages.value = 0;
+    totalPages.value = 1;
   };
 
   return {

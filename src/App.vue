@@ -1,7 +1,8 @@
 <script setup lang="ts">
 import { RouterView } from "vue-router";
-import HeaderBase from "./components/HeaderBase.vue";
-import FooterBase from "./components/FooterBase.vue";
+import HeaderBase from "@/components/HeaderBase.vue";
+import FooterBase from "@/components/FooterBase.vue";
+import ErrorNotification from "@/components/ErrorNotification.vue";
 import { useHead } from "@vueuse/head";
 
 useHead({
@@ -23,6 +24,7 @@ useHead({
 <template>
   <HeaderBase />
   <div class="cl_dived" />
+  <ErrorNotification />
   <router-view :class="['mx-auto max-width', $style['chat-area-wrapper']]" />
   <div class="cl_dived" />
   <FooterBase />

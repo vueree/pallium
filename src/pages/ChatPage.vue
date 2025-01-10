@@ -2,93 +2,34 @@
 import { ref, onMounted, onUnmounted, watch, nextTick, onUpdated } from "vue";
 import { useRouter } from "vue-router";
 import BtnBase from "@/components/atom/BtnBase.vue";
-import LazyInfiniteLoader from "@/components/atom/InfiniteLoader.vue";
+// import LazyInfiniteLoader from "@/components/atom/InfiniteLoader.vue";
 import { storeToRefs } from "pinia";
 import { useWebSocketStore } from "@/stores/webSockets.store";
-import { useChatState, fetchMessageHistory } from "@/use/useChat";
+import { useChatState } from "@/use/useChat";
 import { usePaginationStore } from "@/use/usePaginationStore";
 
 const router = useRouter();
 const chatAreaRef = ref<HTMLElement | null>(null);
 const chatInputRef = ref("");
 
-const loaderRef = ref<HTMLElement | null>(null);
-const isIntersecting = ref(false); // Видимость LazyInfiniteLoader
+// const loaderRef = ref<HTMLElement | null>(null);
 
 const webSocketStore = useWebSocketStore();
 const { messages, isConnected, token } = storeToRefs(webSocketStore);
 
-const {
-  handleKeyPress,
-  handleMessageSend,
-  initializeChat,
-  loadMoreMessages,
-  clearMessages
-} = useChatState();
+const { handleKeyPress, handleMessageSend, clearMessages } = useChatState();
 
-const { totalPages, currentPage, loading } = usePaginationStore();
-
-onUpdated(() => {
-  if (loaderRef.value) {
-    const observer = new IntersectionObserver(
-      ([entry]) => {
-        isIntersecting.value = entry.isIntersecting;
-
-        if (isIntersecting.value && !loading && currentPage < totalPages) {
-          loadMoreMessages(); // Загружаем дополнительные сообщения
-        }
-      },
-      {
-        rootMargin: "0px",
-        threshold: 0.1 // Когда элемент виден на 10%
-      }
-    );
-    observer.observe(loaderRef.value);
-
-    // Очистка observer при размонтировании
-    onUnmounted(() => {
-      observer.disconnect();
-    });
-  }
-});
+const paginationStore = usePaginationStore();
+// const { totalPages, currentPage, loading } = storeToRefs(paginationStore);
 
 onMounted(async () => {
-  await nextTick(); // Дожидаемся, пока обновится DOM и токен
-  console.log("Token after nextTick:", token.value);
   if (!token.value) {
-    console.error("🚨 Token is missing, redirecting to Login...");
     nextTick(() => {
       router.push({ name: "Login" });
     });
-    return;
   }
-
-  // Подключение WebSocket через store
-  webSocketStore.connect("wss://localhost:3000/chat");
-
-  // Когда WebSocket соединение установлено
-  watch(
-    isConnected,
-    async (connected) => {
-      if (connected) {
-        await initializeChat(() => {
-          chatAreaRef.value?.scrollTo({ top: chatAreaRef.value.scrollHeight });
-        });
-        await fetchMessageHistory(currentPage, totalPages); // Загрузка истории сообщений
-      }
-    },
-    { immediate: true }
-  );
-
-  // Обработка входящих сообщений
-  webSocketStore.socket?.addEventListener("message", (event: any) => {
-    const data = JSON.parse(event.data);
-    console.log("New message received:", data);
-    messages.value.push(data); // Добавление сообщения в список
-  });
 });
 
-// Автоматический скролл при изменении сообщений
 watch(
   messages,
   () => {
@@ -102,7 +43,6 @@ watch(
 
 <template>
   <main v-if="token" class="flex flex-col justify-between h-full max-width">
-    <!-- Кнопка очистки сообщений -->
     <BtnBase
       v-if="messages && messages.length > 0"
       :btnClass="[$style['button-remove'], 'absolute']"
@@ -110,13 +50,11 @@ watch(
       @click="clearMessages"
     />
 
-    <!-- Область сообщений -->
     <div
       ref="chatAreaRef"
       :class="[$style['chat-area'], 'flex flex-column w-full']"
     >
-      <!-- Компонент LazyInfiniteLoader -->
-      <LazyInfiniteLoader
+      <!-- <LazyInfiniteLoader
         ref="loaderRef"
         v-if="totalPages > 1"
         :isFetching="loading"
@@ -124,11 +62,8 @@ watch(
         :lastPage="totalPages"
         :distance="100"
         @fetch="loadMoreMessages"
-      >
-        <div v-if="loading" class="loading-indicator">Loading...</div>
-      </LazyInfiniteLoader>
+      /> -->
 
-      <!-- Список сообщений -->
       <div
         v-for="(message, index) in messages"
         :key="`${message.timestamp}-${index}`"
@@ -149,7 +84,6 @@ watch(
       </div>
     </div>
 
-    <!-- Область ввода -->
     <div
       :class="[$style['input-area'], 'flex gap-12 items-center mx-auto w-full']"
     >

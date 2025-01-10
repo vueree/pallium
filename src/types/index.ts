@@ -38,9 +38,25 @@ export interface WebSocketState {
   isConnected: boolean;
 }
 
+export interface AuthCredentials {
+  username: string;
+  password: string;
+}
+
+export interface AuthResponse {
+  token: string;
+  message?: string;
+  user?: {
+    id: number;
+    username: string;
+  };
+}
+
 export interface AuthState {
   username: string;
   password: string;
   isLoading: boolean;
   error: string | null;
 }
+
+export type AuthMode = "login" | "register";

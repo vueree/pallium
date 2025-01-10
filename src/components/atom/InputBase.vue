@@ -1,6 +1,4 @@
 <script setup lang="ts">
-import { ref, computed } from "vue";
-
 interface Props {
   modelValue: string;
   type: string;
@@ -12,9 +10,10 @@ interface Props {
   isBorder?: boolean;
   isLogin?: boolean;
   inputClass?: string;
+  disabled?: boolean;
 }
 
-const props = withDefaults(defineProps<Props>(), {
+withDefaults(defineProps<Props>(), {
   type: "text",
   name: "",
   id: "",
@@ -24,39 +23,31 @@ const props = withDefaults(defineProps<Props>(), {
   isLogin: false
 });
 
-const emit = defineEmits(["update:modelValue"]);
-
-const inputValue = computed({
-  get: () => props.modelValue,
-  set: (value) => emit("update:modelValue", value)
-});
-
-const inputId = computed(
-  () => props.id || `input-${Math.random().toString(36).substr(2, 9)}`
-);
+const emit = defineEmits<{
+  "update:modelValue": [value: string];
+}>();
 </script>
 
 <template>
   <div class="flex items-center relative">
     <input
-      v-model="inputValue"
-      :class="[$style.input, inputClass]"
+      :value="modelValue"
+      :class="[inputClass, $style.input]"
+      :style="{ width }"
       :type="type"
-      :id="inputId"
-      :name="name"
       :placeholder="placeholder"
-      :required="required"
-      :width="`${width}`"
+      :disabled="disabled"
+      @input="(e) => {
+    const target = e.target as HTMLInputElement;
+    if (target) {
+      emit('update:modelValue', target.value);
+    }
+  }"
     />
-    <slot :class="$style.slot" />
   </div>
 </template>
 
 <style module>
-.slot {
-  margin-top: auto;
-}
-
 .input {
   padding: 6px 8px;
 }

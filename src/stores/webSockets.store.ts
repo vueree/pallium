@@ -1,45 +1,49 @@
 import { defineStore } from "pinia";
 import { useRouter } from "vue-router";
 import { ref, watch, nextTick } from "vue";
-import type { IMessage } from "../types";
+import type { IMessage } from "@/types";
+import { initializeSocket, disconnectSocket } from "@/use/useWebSocket";
 
 export const useWebSocketStore = defineStore("webSocketStore", () => {
-  const token = ref<string | null>(null); // Токен WebSocket
-  const messages = ref<IMessage[]>([]); // Сообщения
-  const isConnected = ref(false); // Состояние WebSocket
-  const username = ref<string>(""); // Добавляем свойство username
+  const token = ref<string | null>(null);
+  const messages = ref<IMessage[]>([]);
+  const isConnected = ref(false);
+  const username = ref<string>("");
   const socket = ref<WebSocket | null>(null);
   const router = useRouter();
 
-  let reconnectTimeout: NodeJS.Timeout | null = null; // Таймаут для переподключения
-
-  // Установка token
   const setToken = (newToken: string) => {
-    const maskedToken = newToken.slice(0, 10) + "..." + newToken.slice(-4); // Маскировка токена
+    const maskedToken = newToken.slice(0, 10) + "..." + newToken.slice(-4);
     console.log("🚀 ~ setToken ~ newToken:", maskedToken);
     token.value = newToken;
 
-    // Используем nextTick, чтобы дождаться следующего цикла обновления
     nextTick(() => {
-      console.log("Token after nextTick:", token.value);
       if (!token.value) {
-        router.push({ name: "Login" }); // Перенаправление, если токен пустой
+        router.push({ name: "Login" });
       }
     });
   };
 
+  // Добавление сообщений из REST API
   const addMessages = (newMessages: IMessage[]) => {
-    const uniqueMessages = newMessages.filter(
-      (msg) => !messages.value.find((m) => m.id === msg.id)
-    );
-    messages.value = [...uniqueMessages, ...messages.value];
+    messages.value = [...newMessages, ...messages.value];
+    sortMessages();
   };
 
+  // Добавление нового сообщения из WebSocket
   const addMessage = (newMessage: IMessage) => {
     console.log("🚀 ~ addMessage ~ newMessage:", newMessage);
     if (!messages.value.find((msg) => msg.id === newMessage.id)) {
-      messages.value.push(newMessage);
+      messages.value.unshift(newMessage);
     }
+  };
+
+  // Сортировка сообщений (новые сверху)
+  const sortMessages = () => {
+    messages.value.sort(
+      (a, b) =>
+        new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime()
+    );
   };
 
   const clearMessages = () => {
@@ -53,71 +57,21 @@ export const useWebSocketStore = defineStore("webSocketStore", () => {
       return;
     }
 
-    const url = "ws://localhost:3000/chat"; // Используем токен в URL
-
-    socket.value = new WebSocket(url);
-
-    socket.value.onopen = () => {
+    const socketInstance = initializeSocket(token);
+    if (socketInstance) {
       isConnected.value = true;
-      console.log("🚀 ~ WebSocket connected");
-      if (reconnectTimeout) {
-        clearTimeout(reconnectTimeout); // Сбрасываем таймаут переподключения
-        reconnectTimeout = null;
-      }
-    };
 
-    socket.value.onmessage = (event) => {
-      try {
-        const data = JSON.parse(event.data);
-        console.log("🚀 ~ WebSocket onmessage ~ data:", data);
-        if (Array.isArray(data)) {
-          addMessages(data); // Если получен массив сообщений
-        } else {
-          addMessage(data); // Если получено одно сообщение
-        }
-      } catch (error) {
-        console.error("🚀 ~ WebSocket onmessage error:", error);
-      }
-    };
-
-    socket.value.onerror = (error) => {
-      console.error("🚀 ~ WebSocket error:", error);
-    };
-
-    socket.value.onclose = () => {
-      isConnected.value = false;
-      socket.value = null;
-      console.log("🚀 ~ WebSocket disconnected");
-
-      // Попытка переподключения через 5 секунд
-      if (!reconnectTimeout) {
-        reconnectTimeout = setTimeout(() => {
-          console.log("🚀 ~ Reconnecting WebSocket...");
-          connect(token); // Повторное подключение
-        }, 5000);
-      }
-    };
+      // Слушаем только новые сообщения
+      socketInstance.on("new_message", (message: IMessage) => {
+        addMessage(message);
+      });
+    }
   };
 
-  // Отключение WebSocket
   const disconnect = () => {
-    console.log("🚀 ~ disconnect ~ Disconnecting WebSocket...");
-
-    // Проверка, есть ли активное соединение
-    if (socket.value && isConnected.value) {
-      socket.value.close();
-      socket.value = null;
-      isConnected.value = false;
-      console.log("🚀 ~ WebSocket disconnected");
-    } else {
-      console.log("🚀 ~ disconnect ~ No active WebSocket connection");
-    }
-
-    // Очищаем таймаут переподключения, если он существует
-    if (reconnectTimeout) {
-      clearTimeout(reconnectTimeout);
-      reconnectTimeout = null;
-    }
+    disconnectSocket();
+    isConnected.value = false;
+    socket.value = null;
   };
 
   watch(
@@ -132,13 +86,13 @@ export const useWebSocketStore = defineStore("webSocketStore", () => {
   );
 
   return {
-    token, // Токен WebSocket
+    token,
     messages,
     isConnected,
     connect,
     disconnect,
-    addMessages,
     addMessage,
+    addMessages,
     clearMessages,
     username,
     setToken,

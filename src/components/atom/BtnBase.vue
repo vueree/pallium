@@ -2,27 +2,29 @@
 import { defineProps, defineEmits, withDefaults } from "vue";
 
 interface IProps {
-  href?: string;
+  to?: { name: string } | string;
   target?: string;
   label?: string;
   disabled?: boolean;
   btnClass?: string | string[];
   width?: string;
+  type?: "button" | "submit" | "reset";
 }
 
 const emit = defineEmits(["update:active"]);
 
 const props = withDefaults(defineProps<IProps>(), {
-  isLogin: false,
-  href: "",
+  to: undefined,
   target: "_self",
   label: "",
   disabled: false,
-  btnClass: ""
+  btnClass: "",
+  width: "",
+  type: "button"
 });
 
 const handleClick = (event: Event) => {
-  if (!props.href && !props.disabled) {
+  if (!props.to && !props.disabled) {
     emit("update:active");
   } else if (props.disabled) {
     event.preventDefault();
@@ -32,19 +34,18 @@ const handleClick = (event: Event) => {
 
 <template>
   <component
-    :is="href ? 'a' : 'button'"
-    :href="href"
-    :disabled="!href && disabled"
-    :target="href ? target : null"
-    :rel="href ? 'noopener noreferrer' : null"
-    :width="width"
+    :is="to ? 'router-link' : 'button'"
+    :to="to"
+    :type="!to ? type : undefined"
+    :disabled="disabled"
+    :target="to ? target : undefined"
+    :rel="to ? 'noopener noreferrer' : undefined"
+    :style="{ width }"
     :class="[
       btnClass,
       'flex items-center justify-center w-full pointer rounded-10 justify-center',
       $style.btn,
-      {
-        [$style['btn-disabled']]: disabled
-      }
+      { [$style['btn-disabled']]: disabled }
     ]"
     @click="handleClick"
   >
@@ -71,12 +72,15 @@ const handleClick = (event: Event) => {
   white-space: nowrap;
 }
 
-.btn:hover {
+.btn:hover:not(.btn-disabled) {
   background-position: right center;
 }
 
 .btn-disabled {
   opacity: 0.6;
   cursor: not-allowed;
+  background: hsl(220, 29%, 59%) !important;
+  background-image: none !important;
+  box-shadow: none;
 }
 </style>

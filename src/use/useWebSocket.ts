@@ -1,6 +1,6 @@
 import { reactive } from "vue";
 import { io, Socket } from "socket.io-client";
-import type { WebSocketState } from "../types";
+import type { WebSocketState } from "@/types";
 
 const state = reactive<WebSocketState>({
   socket: null,
@@ -13,18 +13,24 @@ const setupSocketListeners = (socket: Socket) => {
     console.log("[WebSocket] Connected successfully");
   });
 
-  socket.on("disconnect", (reason: string) => {
-    state.isConnected = false;
-    console.log("[WebSocket] Disconnected", { reason });
-
-    if (reason === "io server disconnect") {
-      console.log("[WebSocket] Attempting to reconnect...");
-      socket.connect(); // Пытаемся переподключиться
-    }
+  socket.on("new_message", (message) => {
+    console.log("[WebSocket] New message received:", message);
+    // Здесь можно добавить обработку нового сообщения
+    // Например, эмитить событие для обновления UI
   });
 
   socket.on("error", (error: any) => {
-    console.error("[WebSocket] Error", error);
+    console.error("[WebSocket] Error:", error);
+  });
+
+  socket.on("disconnect", (reason: string) => {
+    state.isConnected = false;
+    console.log("[WebSocket] Disconnected:", reason);
+
+    if (reason === "io server disconnect") {
+      console.log("[WebSocket] Attempting to reconnect...");
+      socket.connect();
+    }
   });
 };
 
@@ -34,7 +40,7 @@ export const initializeSocket = (token: string): Socket | null => {
     return null;
   }
 
-  console.log("[WebSocket] Initializing connection with token:", token);
+  console.log("[WebSocket] Initializing connection...");
 
   const socket = io("http://localhost:3000/chat", {
     auth: { token },
@@ -46,9 +52,16 @@ export const initializeSocket = (token: string): Socket | null => {
   setupSocketListeners(socket);
   state.socket = socket;
 
-  // Логируем состояние соединения после установки слушателей
-  console.log("[WebSocket] Attempting to connect...");
   return socket;
+};
+
+export const sendMessage = (message: string): void => {
+  if (!state.socket || !state.isConnected) {
+    console.error("[WebSocket] Cannot send message: Socket not connected");
+    return;
+  }
+
+  state.socket.emit("send_message", { message });
 };
 
 export const disconnectSocket = (): void => {
@@ -57,15 +70,13 @@ export const disconnectSocket = (): void => {
     state.socket.disconnect();
     state.socket = null;
     state.isConnected = false;
-    console.log("[WebSocket] Socket disconnected");
   }
 };
 
 export const getSocket = (): Socket | null => {
-  return state.socket as Socket | null;
+  return state.socket;
 };
 
 export const useSocketStatus = (): boolean => {
-  console.log("[WebSocket] Current connection status:", state.isConnected);
   return state.isConnected;
 };

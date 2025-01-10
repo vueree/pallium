@@ -1,14 +1,18 @@
-import { ref } from "vue";
-import { loginUser, registerUser } from "@/use/useChat";
+import { ref, computed } from "vue";
 import type { Router } from "vue-router";
-import type { AuthState } from "../types";
+import { registerUser, loginUser } from "@/use/useChat";
+import type { AuthState, AuthMode } from "@/types/";
 
-export const useAuth = (isRegistration = false) => {
+export const useAuth = () => {
   const state = ref<AuthState>({
     username: "",
     password: "",
     isLoading: false,
     error: null
+  });
+
+  const isFormValid = computed(() => {
+    return state.value.username.length > 0 && state.value.password.length >= 6;
   });
 
   const resetForm = () => {
@@ -20,44 +24,27 @@ export const useAuth = (isRegistration = false) => {
     };
   };
 
-  const validateForm = (): boolean => {
-    if (!state.value.username.trim()) {
-      state.value.error = "Username is required";
-      return false;
-    }
-    if (!state.value.password.trim()) {
-      state.value.error = "Password is required";
-      return false;
-    }
-    if (state.value.password.length < 6) {
-      state.value.error = "Password must be at least 6 characters";
-      return false;
-    }
-    return true;
-  };
+  const handleSubmit = async (mode: AuthMode, router: Router) => {
+    state.value.isLoading = true;
+    state.value.error = null;
 
-  const handleSubmit = async (router: Router) => {
     try {
-      if (!validateForm()) return;
+      const credentials = {
+        username: state.value.username,
+        password: state.value.password
+      };
 
-      state.value.isLoading = true;
-      state.value.error = null;
-
-      if (isRegistration) {
-        await registerUser(state.value.username, state.value.password, router);
+      if (mode === "login") {
+        await loginUser(credentials);
+        resetForm();
+        await router.push({ name: "Chat" });
       } else {
-        await loginUser(state.value.username, state.value.password, router);
+        await registerUser(credentials);
+        resetForm();
+        await router.push({ name: "Chat" });
       }
-
-      resetForm();
     } catch (error) {
-      state.value.error =
-        error?.response?.data?.message ||
-        `${isRegistration ? "Registration" : "Login"} failed`;
-      console.error(
-        `${isRegistration ? "Registration" : "Login"} error:`,
-        error
-      );
+      throw error;
     } finally {
       state.value.isLoading = false;
     }
@@ -66,6 +53,6 @@ export const useAuth = (isRegistration = false) => {
   return {
     state,
     handleSubmit,
-    resetForm
+    isFormValid
   };
 };
