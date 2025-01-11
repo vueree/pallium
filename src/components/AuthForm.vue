@@ -2,9 +2,9 @@
 import { useRouter } from "vue-router";
 import InputBase from "@/components/atom/InputBase.vue";
 import BtnBase from "@/components/atom/BtnBase.vue";
-import { useAuth } from "@/use/useAuth";
-import { useError } from "@/use/useError";
-import { INPUT_WIDTH } from "@/use/useChat";
+import { useAuth } from "@/composables/useAuth";
+import { INPUT_WIDTH } from "@/constants";
+import type { State } from "@/types";
 
 const props = defineProps<{
   mode: "login" | "register";
@@ -13,14 +13,46 @@ const props = defineProps<{
 
 const router = useRouter();
 const { state, handleSubmit, isFormValid } = useAuth();
-const { showError } = useError();
+
+type InputField = {
+  model: keyof Pick<State, "username" | "password">;
+  type: string;
+  placeholder: string;
+  autocomplete: string;
+  minlength?: number;
+};
+
+const inputFields: InputField[] = [
+  {
+    model: "username",
+    type: "text",
+    placeholder: "Username",
+    autocomplete: "username",
+    minlength: undefined
+  },
+  {
+    model: "password",
+    type: "password",
+    placeholder: "Password",
+    autocomplete:
+      props.mode === "register" ? "new-password" : "current-password",
+    minlength: 6
+  }
+];
+
+const handleInputChange = (
+  field: keyof Pick<State, "username" | "password">,
+  value: string
+) => {
+  state.value[field] = value;
+};
 
 const handleFormSubmit = async () => {
   try {
     await handleSubmit(props.mode, router);
-    await router.push({ name: "Chat" });
+    router.push("/chat");
   } catch (error) {
-    showError(error instanceof Error ? error.message : "An error occurred");
+    console.error(error);
   }
 };
 
@@ -42,27 +74,18 @@ const getButtonLabel = () => {
 
     <div class="flex flex-column gap-12">
       <InputBase
-        v-model="state.username"
-        inputClass="rounded-10"
+        v-for="(field, index) in inputFields"
+        :key="index"
+        :modelValue="state[field.model]"
+        :inputClass="'rounded-10'"
         :width="String(INPUT_WIDTH)"
-        type="text"
-        placeholder="Username"
-        required
+        :type="field.type"
+        :placeholder="field.placeholder"
+        :required="true"
         :disabled="state.isLoading"
-        autocomplete="username"
-      />
-      <InputBase
-        v-model="state.password"
-        inputClass="rounded-10"
-        :width="String(INPUT_WIDTH)"
-        type="password"
-        placeholder="Password"
-        required
-        :disabled="state.isLoading"
-        :autocomplete="
-          mode === 'register' ? 'new-password' : 'current-password'
-        "
-        minlength="6"
+        :autocomplete="field.autocomplete"
+        :minlength="field.minlength"
+        @update:modelValue="(value: string) => handleInputChange(field.model, value)"
       />
     </div>
 
@@ -74,7 +97,7 @@ const getButtonLabel = () => {
         :disabled="!isFormValid"
       />
       <BtnBase
-        v-if="mode === 'login'"
+        v-if="props.mode === 'login'"
         :btnClass="$style['submit-button']"
         :to="{ name: 'Registration' }"
         label="Create account"

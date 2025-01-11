@@ -52,7 +52,7 @@ export interface AuthCredentials {
 }
 
 export interface AuthResponse {
-  token: string;
+  token: string | undefined;
   message?: string;
   user?: {
     id: number;
@@ -68,3 +68,10 @@ export interface AuthState {
 }
 
 export type AuthMode = "login" | "register";
+
+export type State = {
+  username: string;
+  password: string;
+  isLoading: boolean;
+  error: string | null;
+};

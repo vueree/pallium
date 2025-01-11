@@ -1,35 +1,34 @@
 <script setup lang="ts">
-// import { useRouter } from "vue-router";
+import { useRouter } from "vue-router";
 import { storeToRefs } from "pinia";
-import { useWebSocketStore } from "@/stores/webSockets.store";
-import { logout } from "@/use/useChat";
+import Cookies from "js-cookie";
+import { useSocketStore } from "@/stores/socket.store";
+import { AUTH_TOKEN_KEY } from "@/constants";
 
-// import { AUTH_TOKEN_KEY } from "@/use/useChat";
+const router = useRouter();
 
-// const router = useRouter();
-
-const webSocketStore = useWebSocketStore();
+const webSocketStore = useSocketStore();
 const { isConnected } = storeToRefs(webSocketStore);
 
-// const handleLogout = () => {
-// Cookies.remove(AUTH_TOKEN_KEY, {
-//   path: "/",
-//   // domain: "api-pallium.onrender.com"
-//   domain: "http://localhost:3000"
-// });
-// Cookies.remove(AUTH_TOKEN_KEY, { path: "/", domain: "pallium.onrender.com" });
-// Cookies.remove(AUTH_TOKEN_KEY, {
-//   path: "/",
-//   domain: "http://localhost:3000"
-// });
+const handleLogout = () => {
+  Cookies.remove(AUTH_TOKEN_KEY, {
+    path: "/",
+    // domain: "api-pallium.onrender.com"
+    domain: "http://localhost:3000"
+  });
+  Cookies.remove(AUTH_TOKEN_KEY, { path: "/", domain: "pallium.onrender.com" });
+  Cookies.remove(AUTH_TOKEN_KEY, {
+    path: "/",
+    domain: "http://localhost:3000"
+  });
 
-// router.push({ name: "Login" });
-// };
+  router.push({ name: "Login" });
+};
 </script>
 
 <template>
   <header class="flex items-center w-full max-width mx-auto">
-    <a class="pointer" @click.prevent="logout"> P A L L I U M </a>
+    <a class="pointer" @click.prevent="handleLogout"> P A L L I U M </a>
     <span :class="isConnected ? $style['cl-green'] : $style['cl-red']">{{
       isConnected ? "is connected" : "is not connected"
     }}</span>

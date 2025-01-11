@@ -2,7 +2,7 @@ import { defineStore } from "pinia";
 import { useRouter } from "vue-router";
 import { ref, watch, nextTick } from "vue";
 import type { IMessage } from "@/types";
-import { initializeSocket, disconnectSocket } from "@/use/useWebSocket";
+import { initializeSocket, disconnectSocket } from "@/composables/useWebSocket";
 
 export const useWebSocketStore = defineStore("webSocketStore", () => {
   const token = ref<string | null>(null);

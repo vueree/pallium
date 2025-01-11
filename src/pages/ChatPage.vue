@@ -1,33 +1,59 @@
 <script setup lang="ts">
-import { ref, onMounted, onUnmounted, watch, nextTick, onUpdated } from "vue";
+import { ref, onMounted, onUnmounted, watch, nextTick } from "vue";
 import { useRouter } from "vue-router";
 import BtnBase from "@/components/atom/BtnBase.vue";
 import LazyInfiniteLoader from "@/components/atom/InfiniteLoader.vue";
-import { storeToRefs } from "pinia";
-import { useWebSocketStore } from "@/stores/webSockets.store";
-import { useChatState } from "@/use/useChat";
-import { usePaginationStore } from "@/use/usePaginationStore";
+import { useChat } from "@/composables/useChat";
 
 const router = useRouter();
 const chatAreaRef = ref<HTMLElement | null>(null);
 const chatInputRef = ref("");
-
 const loaderRef = ref<HTMLElement | null>(null);
 
-const webSocketStore = useWebSocketStore();
-const { messages, isConnected, token } = storeToRefs(webSocketStore);
+const chat = useChat();
 
-const { handleKeyPress, handleMessageSend, clearMessages, loadMoreMessages } =
-  useChatState();
+const {
+  messages,
+  isConnected,
+  username,
+  currentPage,
+  totalPages,
+  loading,
+  clearMessages,
+  loadMoreMessages,
+  handleMessageSend,
+  setupWebSocket
+} = chat;
 
-const paginationStore = usePaginationStore();
-const { totalPages, currentPage, loading } = storeToRefs(paginationStore);
+const handleKeyPress = (event: KeyboardEvent) => {
+  if (event.key === "Enter" && !event.shiftKey) {
+    event.preventDefault();
+    handleSendMessage();
+  }
+};
 
-onMounted(async () => {
-  if (!token.value) {
+const handleSendMessage = () => {
+  handleMessageSend(chatInputRef.value, () => {
+    chatInputRef.value = "";
+  });
+};
+
+onMounted(() => {
+  const token = localStorage.getItem("auth_token");
+  if (!token) {
     nextTick(() => {
       router.push({ name: "Login" });
     });
+    return;
+  }
+
+  setupWebSocket();
+});
+
+onUnmounted(() => {
+  const { disconnect } = useChat();
+  if (disconnect) {
+    disconnect();
   }
 });
 
@@ -70,9 +96,7 @@ watch(
         :key="`${message.timestamp}-${index}`"
         :class="[
           $style.message,
-          message.username === webSocketStore.username
-            ? $style['own-message']
-            : ''
+          message.username === username ? $style['own-message'] : ''
         ]"
       >
         <span :class="$style['message-user']">{{
@@ -94,18 +118,13 @@ watch(
         placeholder="Enter your message..."
         rows="3"
         spellcheck="true"
-        @keydown="
-          (event) =>
-            handleKeyPress(event, () =>
-              handleMessageSend(chatInputRef, () => (chatInputRef = ''))
-            )
-        "
+        @keydown="handleKeyPress"
       />
       <BtnBase
         :btnClass="$style['button-send']"
         label="Send"
         :disabled="!isConnected"
-        @click="handleMessageSend(chatInputRef, () => (chatInputRef = ''))"
+        @click="handleSendMessage"
       />
     </div>
   </main>
