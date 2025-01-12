@@ -104,6 +104,7 @@ const getButtonLabel = () => {
   padding: 20px;
   z-index: 2;
   position: relative;
+  background-color: rgba(14, 115, 37, 0.1);
 }
 
 .title {

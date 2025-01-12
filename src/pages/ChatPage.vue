@@ -15,7 +15,6 @@ const chat = useChat();
 const {
   messages,
   isConnected,
-  username,
   currentPage,
   totalPages,
   loading,
@@ -56,6 +55,8 @@ onUnmounted(() => {
     disconnect();
   }
 });
+
+const username = localStorage.getItem("username");
 
 watch(
   messages,

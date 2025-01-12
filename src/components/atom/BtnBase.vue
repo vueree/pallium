@@ -54,7 +54,7 @@ const handleClick = (event: Event) => {
 </template>
 
 <style module>
-button {
+.component {
   color: white;
 }
 
