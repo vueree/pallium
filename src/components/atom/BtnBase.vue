@@ -43,24 +43,31 @@ const handleClick = (event: Event) => {
     :style="{ width }"
     :class="[
       btnClass,
+      'flex button-text items-center justify-center w-full pointer rounded-10 justify-center text-decoration-none border-none',
       $style.btn,
-      'flex items-center justify-center w-full pointer rounded-10 justify-center text-decoration-none border-none',
       { [$style['btn-disabled']]: disabled }
     ]"
     @click="handleClick"
   >
-    <span class="cl_white text-center">{{ label }}</span>
+    {{ label }}
   </component>
 </template>
 
 <style module>
+button {
+  color: white;
+}
+
 .btn {
   display: inline-flex;
+  text-decoration: none;
   transition: 0.5s;
   background-size: 200% auto;
+  background-position: left center;
   box-shadow: 0 0 20px #eee;
+  border: none;
   background-image: linear-gradient(
-    to right,
+    95deg,
     #003cc5 0%,
     #0b63f6 51%,
     #003cc5 100%
@@ -72,6 +79,7 @@ const handleClick = (event: Event) => {
 
 .btn:hover:not(.btn-disabled) {
   background-position: right center;
+  background-image: linear-gradient(90deg, #003cc5, #0b63f6, #66b366);
 }
 
 .btn-disabled {

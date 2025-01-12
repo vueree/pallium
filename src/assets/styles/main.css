@@ -1,7 +1,6 @@
 html,
 body {
   margin: 0;
-  font-family: "Releway", sans-serif;
 }
 
 header {
@@ -14,8 +13,6 @@ footer {
 }
 
 input::placeholder {
-  font-size: 16px;
-  font-weight: 300;
   color: #aaa;
   opacity: 70%;
 }
@@ -25,15 +22,11 @@ input {
   outline: none;
   border: 1px solid #8189b7;
   min-height: 60px;
-  font-size: 18px;
-  font-weight: 400;
   color: #333;
   width: 300px;
 }
 
 .title {
-  font-size: 30px;
-  font-weight: 700;
   color: #333;
   margin-top: 140px;
   margin-bottom: 24px;
@@ -41,8 +34,6 @@ input {
 }
 
 .chat-username {
-  font-size: 16px;
-  font-weight: 600;
   color: #0077cc;
 }
 
@@ -129,10 +120,6 @@ input {
 
 .mt-auto {
   margin-top: auto;
-}
-
-.btn-font {
-  font-family: "Raleway", sans-serif;
 }
 
 .display-block {

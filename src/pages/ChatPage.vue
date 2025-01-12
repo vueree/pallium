@@ -69,14 +69,16 @@ watch(
 </script>
 
 <template>
-  <main class="flex flex-column justify-between h-full max-width">
+  <main
+    :class="$style['chat-container']"
+    class="flex flex-column justify-between h-full max-width"
+  >
     <BtnBase
       v-if="messages && messages.length > 0"
       :btnClass="[$style['button-remove'], 'absolute']"
       label="Clear"
       @click="clearMessages"
     />
-
     <div
       ref="chatAreaRef"
       :class="[$style['chat-area'], 'flex flex-column w-full']"
@@ -90,7 +92,6 @@ watch(
         :distance="100"
         @fetch="loadMoreMessages"
       />
-
       <div
         v-for="(message, index) in messages"
         :key="`${message.timestamp}-${index}`"
@@ -99,16 +100,17 @@ watch(
           message.username === username ? $style['own-message'] : ''
         ]"
       >
-        <span :class="$style['message-user']">{{
+        <span :class="[$style['message-user'], 'chat-username']">{{
           message.username || "Anonymous"
         }}</span>
-        <span class="display-block">{{ message.message }}</span>
-        <span :class="[$style['message-time'], 'display-block']">
+        <span class="display-block chat-message">{{ message.message }}</span>
+        <span
+          :class="[$style['message-time'], 'display-block message-timestamp']"
+        >
           {{ new Date(message.timestamp).toLocaleTimeString() }}
         </span>
       </div>
     </div>
-
     <div
       :class="[
         $style['input-area'],
@@ -119,7 +121,7 @@ watch(
         v-model="chatInputRef"
         :class="[$style['text-area'], 'rounded-10 w-full']"
         placeholder="Enter your message..."
-        rows="3"
+        rows="2"
         spellcheck="true"
         @keydown="handleKeyPress"
       />
@@ -134,38 +136,68 @@ watch(
 </template>
 
 <style module>
+:root {
+  --color-primary: rgb(52, 93, 255);
+  --color-green: #66b366;
+  --color-red: #cc4f4f;
+  --color-background: #000000;
+  --color-border: rgba(173, 180, 230, 0.5);
+  --color-text-light: #f0f0f0;
+  --color-text-muted: #888;
+  --color-own-message: #dcf8c6;
+}
+
+.chat-container {
+  z-index: 222;
+  position: relative;
+}
+
 .chat-area {
+  background-color: var(--color-background);
   overflow-y: auto;
+  padding: 12px;
+  border-radius: 8px;
 }
 
 .message {
-  padding: 8px;
+  padding: 10px;
   border-radius: 8px;
-  background-color: #f0f0f0;
+  background-color: rgba(255, 255, 255, 0.1);
+  color: var(--color-text-light);
+  border: 1px solid var(--color-border);
   align-self: flex-start;
   margin-top: 12px;
   margin-bottom: 12px;
+  transition: background-color 0.3s ease;
 }
 
 .own-message {
   align-self: flex-end;
-  background-color: #dcf8c6;
+  color: var(--color-own-message);
+  background-color: rgba(102, 179, 102, 0.2);
 }
 
 .message-user {
-  font-weight: bold;
+  color: var(--color-text-light);
 }
 
 .message-time {
-  font-size: 0.8em;
-  color: #888;
+  color: var(--color-text-muted);
   text-align: right;
 }
 
 .text-area {
-  border: 1px solid rgba(173, 180, 230, 0.5);
+  border: 1px solid var(--color-border);
   resize: none;
   padding: 8px 12px;
+  background-color: rgba(255, 255, 255, 0.1);
+  color: var(--color-text-light);
+  border-radius: 10px;
+  transition: border-color 0.3s ease;
+}
+
+.text-area:focus {
+  border-color: var(--color-primary);
 }
 
 .input-area {
@@ -176,10 +208,24 @@ watch(
   top: 70px;
   right: 50px;
   opacity: 0.1;
+  transition: opacity 0.3s ease;
+}
+
+.button-remove:hover {
+  opacity: 1;
 }
 
 .button-remove,
 .button-send {
   max-width: 80px;
+}
+
+.button-send:disabled {
+  background: rgba(102, 179, 102, 0.1);
+  pointer-events: none;
+}
+
+.button-send:hover {
+  background-position: right center;
 }
 </style>

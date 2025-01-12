@@ -31,7 +31,7 @@ const emit = defineEmits<{
   <div class="flex items-center relative">
     <input
       :value="modelValue"
-      :class="[inputClass, $style.input]"
+      :class="[inputClass, $style.input, 'input-text']"
       :type="type"
       :placeholder="placeholder"
       :disabled="disabled"
