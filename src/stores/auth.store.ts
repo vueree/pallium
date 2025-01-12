@@ -1,15 +1,10 @@
 import { defineStore } from "pinia";
 import Cookies from "js-cookie";
 import apiClient from "@/api/api";
-
-interface AuthState {
-  accessToken: string | null;
-  refreshToken: string | null;
-  user: { id: string; name: string } | null;
-}
+import type { IAuthState } from "@/types";
 
 export const useAuthStore = defineStore("auth", {
-  state: (): AuthState => ({
+  state: (): IAuthState => ({
     accessToken: null,
     refreshToken: null,
     user: null

@@ -75,3 +75,24 @@ export type State = {
   isLoading: boolean;
   error: string | null;
 };
+
+export interface ISocketState {
+  socket: Socket | null;
+  messages: IMessage[];
+  isConnected: boolean;
+  username: string | null;
+}
+
+export type InputField = {
+  model: keyof Pick<State, "username" | "password">;
+  type: string;
+  placeholder: string;
+  autocomplete: string;
+  minlength?: number;
+};
+
+export interface IAuthState {
+  accessToken: string | null;
+  refreshToken: string | null;
+  user: { id: string; name: string } | null;
+}

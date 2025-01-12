@@ -5,8 +5,6 @@ import { useSocketStore } from "@/stores/socket.store";
 import { usePaginationStore } from "@/composables/usePaginationStore";
 import { useChat } from "@/composables/useChat";
 import apiClient from "@/api/api";
-import { useRouter } from "vue-router";
-import { io } from "socket.io-client";
 
 import {
   AUTH_TOKEN_KEY,
@@ -69,18 +67,15 @@ const handleAuthResponse = async (
     throw new Error("Ошибка получения токена авторизации");
   }
 
-  // Сохраняем токен без префикса Bearer
   Cookies.set(AUTH_TOKEN_KEY, token, {
     expires: tokenExpiry,
     secure: process.env.NODE_ENV === "production",
     sameSite: "strict"
   });
 
-  // Подключаем сокет
   const socketStore = useSocketStore();
   socketStore.connect(token);
 
-  // Загружаем историю сообщений
   const pagination = usePaginationStore();
   const { fetchMessageHistory } = useChat();
   await fetchMessageHistory(pagination.currentPage, MESSAGE_PER_PAGE);

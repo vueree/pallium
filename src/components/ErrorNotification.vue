@@ -14,7 +14,7 @@ const { error, isVisible } = storeToRefs(errorStore);
     >
       {{ error }}
       <button
-        class="close-button"
+        class="close-button border-none"
         @click="errorStore.hideError"
         aria-label="Close error notification"
       >
@@ -45,7 +45,6 @@ const { error, isVisible } = storeToRefs(errorStore);
   top: 50%;
   transform: translateY(-50%);
   background: none;
-  border: none;
   font-size: 20px;
   cursor: pointer;
   color: #dc3545;
@@ -56,7 +55,6 @@ const { error, isVisible } = storeToRefs(errorStore);
   opacity: 0.7;
 }
 
-/* Анимации */
 .fade-enter-active,
 .fade-leave-active {
   transition: opacity 0.3s ease;

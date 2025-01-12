@@ -1,16 +1,9 @@
 import { defineStore } from "pinia";
-import { io, Socket } from "socket.io-client";
-import type { IMessage } from "@/types";
-
-interface SocketState {
-  socket: Socket | null;
-  messages: IMessage[];
-  isConnected: boolean;
-  username: string | null;
-}
+import { io } from "socket.io-client";
+import type { IMessage, ISocketState } from "@/types";
 
 export const useSocketStore = defineStore("socket", {
-  state: (): SocketState => ({
+  state: (): ISocketState => ({
     socket: null,
     messages: [],
     isConnected: false,
@@ -23,8 +16,6 @@ export const useSocketStore = defineStore("socket", {
         console.log("Socket already connected, skipping connection");
         return;
       }
-
-      console.log("Initializing socket connection...");
 
       this.socket = io("http://localhost:3000/chat", {
         auth: {
@@ -52,30 +43,26 @@ export const useSocketStore = defineStore("socket", {
       }
 
       this.socket.on("connect", () => {
-        console.log("Socket connected successfully", this.socket?.id);
         this.isConnected = true;
       });
 
       this.socket.on("connect_error", (error) => {
         console.error("Socket connection error:", {
           message: error.message,
-          data: error.data
+          data: error
         });
 
         if (error.message === "Invalid token") {
-          console.log("Invalid token detected, cleaning up connection");
           this.disconnect();
           this.clearMessages();
         }
       });
 
       this.socket.on("disconnect", (reason) => {
-        console.log(`Socket disconnected: ${reason}`);
         this.isConnected = false;
       });
 
       this.socket.on("new_message", (message: IMessage) => {
-        console.log("New message received:", message);
         this.handleNewMessage(message);
       });
 
@@ -134,7 +121,6 @@ export const useSocketStore = defineStore("socket", {
 
     disconnect() {
       if (this.socket) {
-        console.log("Manually disconnecting socket");
         this.socket.disconnect();
         this.socket = null;
       }

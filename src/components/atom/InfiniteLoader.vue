@@ -34,14 +34,13 @@ onUnmounted(() => {
 </script>
 
 <template>
-  <div ref="sentinel" class="sentinel">
+  <div ref="sentinel" class="sentinel w-full">
     <slot />
   </div>
 </template>
 
 <style scoped>
 .sentinel {
-  width: 100%;
   height: 20px;
 }
 </style>

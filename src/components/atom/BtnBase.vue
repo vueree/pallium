@@ -43,8 +43,8 @@ const handleClick = (event: Event) => {
     :style="{ width }"
     :class="[
       btnClass,
-      'flex items-center justify-center w-full pointer rounded-10 justify-center',
       $style.btn,
+      'flex items-center justify-center w-full pointer rounded-10 justify-center text-decoration-none border-none',
       { [$style['btn-disabled']]: disabled }
     ]"
     @click="handleClick"
@@ -56,11 +56,9 @@ const handleClick = (event: Event) => {
 <style module>
 .btn {
   display: inline-flex;
-  text-decoration: none;
   transition: 0.5s;
   background-size: 200% auto;
   box-shadow: 0 0 20px #eee;
-  border: none;
   background-image: linear-gradient(
     to right,
     #003cc5 0%,

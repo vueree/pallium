@@ -1,9 +1,9 @@
 <script setup lang="ts">
 import { ref, onMounted, onUnmounted, watch, nextTick } from "vue";
 import { useRouter } from "vue-router";
+import { useChat } from "@/composables/useChat";
 import BtnBase from "@/components/atom/BtnBase.vue";
 import LazyInfiniteLoader from "@/components/atom/InfiniteLoader.vue";
-import { useChat } from "@/composables/useChat";
 
 const router = useRouter();
 const chatAreaRef = ref<HTMLElement | null>(null);
@@ -110,7 +110,10 @@ watch(
     </div>
 
     <div
-      :class="[$style['input-area'], 'flex gap-12 items-center mx-auto w-full']"
+      :class="[
+        $style['input-area'],
+        'flex gap-12 items-center mx-auto w-full mt-auto'
+      ]"
     >
       <textarea
         v-model="chatInputRef"
@@ -133,11 +136,6 @@ watch(
 <style module>
 .chat-area {
   overflow-y: auto;
-}
-
-.loading-indicator {
-  text-align: center;
-  margin: 10px 0;
 }
 
 .message {
@@ -172,8 +170,6 @@ watch(
 
 .input-area {
   margin-bottom: 8px;
-  margin-top: auto;
-  width: 100%;
 }
 
 .button-remove {

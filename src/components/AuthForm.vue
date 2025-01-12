@@ -1,10 +1,9 @@
 <script setup lang="ts">
 import { useRouter } from "vue-router";
+import { useAuth } from "@/composables/useAuth";
 import InputBase from "@/components/atom/InputBase.vue";
 import BtnBase from "@/components/atom/BtnBase.vue";
-import { useAuth } from "@/composables/useAuth";
-import { INPUT_WIDTH } from "@/constants";
-import type { State } from "@/types";
+import type { State, InputField } from "@/types";
 
 const props = defineProps<{
   mode: "login" | "register";
@@ -13,14 +12,6 @@ const props = defineProps<{
 
 const router = useRouter();
 const { state, handleSubmit, isFormValid } = useAuth();
-
-type InputField = {
-  model: keyof Pick<State, "username" | "password">;
-  type: string;
-  placeholder: string;
-  autocomplete: string;
-  minlength?: number;
-};
 
 const inputFields: InputField[] = [
   {
@@ -78,7 +69,6 @@ const getButtonLabel = () => {
         :key="index"
         :modelValue="state[field.model]"
         :inputClass="'rounded-10'"
-        :width="String(INPUT_WIDTH)"
         :type="field.type"
         :placeholder="field.placeholder"
         :required="true"

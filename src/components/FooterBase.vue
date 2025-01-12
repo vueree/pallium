@@ -1,5 +1,5 @@
 <template>
-  <footer :class="$style['footer-wrapper']">
+  <footer :class="[$style['footer-wrapper'], 'mt-auto']">
     <span class="flex mx-auto justify-center">
       &copy; {{ new Date().getFullYear() }} Notes App. All rights reserved.
     </span>
@@ -9,7 +9,6 @@
 <style module>
 .footer-wrapper {
   padding: 16px;
-  max-height: 60px;
-  margin-top: auto;
+  height: 28px;
 }
 </style>

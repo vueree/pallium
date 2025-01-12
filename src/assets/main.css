@@ -1,16 +1,16 @@
 html,
 body {
   margin: 0;
-  height: 100%;
-}
-
-body {
   font-family: "Releway", sans-serif;
 }
 
-header,
-footer {
+header {
   height: 60px;
+}
+
+footer {
+  padding: 16px;
+  height: 28px;
 }
 
 input::placeholder {
@@ -46,30 +46,6 @@ input {
   color: #0077cc;
 }
 
-/* Время отправки сообщений */
-.chat-timestamp {
-  font-size: 12px;
-  font-weight: 400;
-  color: #888;
-}
-
-/* Сообщение */
-.chat-message {
-  font-size: 14px;
-  font-weight: 400;
-  color: #000;
-  line-height: 1.5;
-}
-
-/* Текст в инпутах */
-.chat-input-text {
-  font-size: 14px;
-  font-weight: 400;
-  color: #000;
-}
-
-/* flex */
-
 .flex {
   display: flex;
 }
@@ -98,12 +74,16 @@ input {
   gap: 12px;
 }
 
-.text-center {
-  text-align: center;
+.text-decoration-none {
+  text-decoration: none;
 }
 
-.p-16 {
-  padding: 16px;
+.border-none {
+  border: none;
+}
+
+.bg_red {
+  color: #dc3545;
 }
 
 .mx-auto {
@@ -143,12 +123,12 @@ input {
   position: absolute;
 }
 
-.text-center {
-  text-align: center;
-}
-
 .cl_white {
   color: white;
+}
+
+.mt-auto {
+  margin-top: auto;
 }
 
 .btn-font {
@@ -157,4 +137,8 @@ input {
 
 .display-block {
   display: block;
+}
+
+.text-center {
+  text-align: center;
 }

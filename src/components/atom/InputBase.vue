@@ -1,5 +1,5 @@
 <script setup lang="ts">
-interface Props {
+interface IProps {
   modelValue: string;
   type: string;
   name?: string;
@@ -13,13 +13,12 @@ interface Props {
   disabled?: boolean;
 }
 
-withDefaults(defineProps<Props>(), {
+withDefaults(defineProps<IProps>(), {
   type: "text",
   name: "",
   id: "",
   placeholder: "",
   required: false,
-  width: "200px",
   isLogin: false
 });
 
@@ -33,7 +32,6 @@ const emit = defineEmits<{
     <input
       :value="modelValue"
       :class="[inputClass, $style.input]"
-      :style="{ width }"
       :type="type"
       :placeholder="placeholder"
       :disabled="disabled"

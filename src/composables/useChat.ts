@@ -1,8 +1,7 @@
-import { ref } from "vue";
+import { ref, onUnmounted } from "vue";
+import { storeToRefs } from "pinia";
 import axios from "axios";
 import Cookies from "js-cookie";
-import { onUnmounted } from "vue";
-import { storeToRefs } from "pinia";
 import { useSocketStore } from "@/stores/socket.store";
 import { usePaginationStore } from "@/composables/usePaginationStore";
 import { useError } from "@/composables/useError";
@@ -11,7 +10,8 @@ import {
   AUTH_TOKEN_KEY,
   API_URL,
   CHAT_ERROR_MESSAGES,
-  MESSAGES_STORAGE_KEY
+  MESSAGES_STORAGE_KEY,
+  MESSAGE_PER_PAGE
 } from "@/constants";
 import type { IMessage } from "@/types";
 
@@ -35,26 +35,6 @@ const loadMessagesFromStorage = (): IMessage[] => {
 
 const createAuthHeaders = (token?: string) =>
   token ? { Authorization: `Bearer ${token}` } : {};
-
-const handleAxiosError = (error: unknown, showError: (msg: string) => void) => {
-  if (axios.isAxiosError(error)) {
-    const status = error.response?.status;
-    if (status === 401) {
-      showError(CHAT_ERROR_MESSAGES.SESSION_EXPIRED);
-    } else if (status === 404) {
-      showError(CHAT_ERROR_MESSAGES.NO_MESSAGES);
-    } else {
-      showError(
-        `${CHAT_ERROR_MESSAGES.LOAD_MESSAGES_FAILED}: ${
-          error.response?.data?.message || CHAT_ERROR_MESSAGES.UNEXPECTED_ERROR
-        }`
-      );
-    }
-  } else {
-    showError(CHAT_ERROR_MESSAGES.UNEXPECTED_ERROR);
-  }
-  throw error;
-};
 
 export const useChat = () => {
   const errorState = ref(null);
@@ -114,7 +94,7 @@ export const useChat = () => {
         totalPages: data.totalPages
       };
     } catch (error) {
-      handleAxiosError(error, showError);
+      showError(CHAT_ERROR_MESSAGES.LOAD_MESSAGES_FAILED);
       throw error;
     }
   };
@@ -135,7 +115,7 @@ export const useChat = () => {
       socketStore.clearMessages();
       localStorage.removeItem(MESSAGES_STORAGE_KEY);
     } catch (error) {
-      handleAxiosError(error, showError);
+      showError(CHAT_ERROR_MESSAGES.CLEAR_MESSAGES_FAILED);
     }
   };
 
@@ -151,9 +131,9 @@ export const useChat = () => {
 
     try {
       const nextPage = currentPage.value + 1;
-      await fetchMessageHistory(nextPage, 20);
+      await fetchMessageHistory(nextPage, MESSAGE_PER_PAGE);
     } catch (error) {
-      console.error(error);
+      showError(CHAT_ERROR_MESSAGES.LOAD_MESSAGES_FAILED);
     } finally {
       loading.value = false;
     }
@@ -238,7 +218,6 @@ export const useChat = () => {
     totalPages,
     loading,
     errorState,
-
     clearMessages,
     loadMoreMessages,
     handleMessageSend,
