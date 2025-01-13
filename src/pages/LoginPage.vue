@@ -4,6 +4,6 @@ import AuthForm from "../components/AuthForm.vue";
 
 <template>
   <main>
-    <AuthForm mode="login" title="Welcome!" />
+    <AuthForm mode="login" title="Please log in to get started" />
   </main>
 </template>

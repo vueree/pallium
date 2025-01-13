@@ -31,7 +31,7 @@ const emit = defineEmits<{
   <div class="flex items-center relative">
     <input
       :value="modelValue"
-      class="input-text rounded-10"
+      class="input-text rounded-10 cl_text-light"
       :type="type"
       :placeholder="placeholder"
       :disabled="disabled"

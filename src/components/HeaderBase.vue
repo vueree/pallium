@@ -21,9 +21,7 @@ const handleLogout = () => {
 </script>
 
 <template>
-  <header
-    class="z-2 flex items-center justify-between w-full max-width mx-auto relative"
-  >
+  <header class="z-2 flex items-center justify-between w-full mx-auto relative">
     <a
       class="pointer text-decoration-none app-logo"
       @click.prevent="handleLogout"
@@ -35,8 +33,8 @@ const handleLogout = () => {
         'status-text relative overflow-hidden',
         $style.status,
         isConnected
-          ? [$style['cl-green'], $style['connected']]
-          : [$style['cl-red'], $style['disconnected']]
+          ? ['cl_green', $style['connected']]
+          : ['cl_red', $style['disconnected']]
       ]"
       >{{ isConnected ? "С O N N E C T E D" : "D I S C O N N E C T E D" }}</span
     >
@@ -44,13 +42,6 @@ const handleLogout = () => {
 </template>
 
 <style module>
-:root {
-  --color-primary: rgb(52, 93, 255);
-  --color-green: #66b366;
-  --color-red: #cc4f4f;
-  --glitch-offset: 3px;
-}
-
 a {
   color: transparent;
   text-decoration: none;
@@ -69,14 +60,6 @@ a:hover {
   margin-left: 10px;
   display: inline-block;
   cursor: default;
-}
-
-.cl-green {
-  color: var(--color-green);
-}
-
-.cl-red {
-  color: var(--color-red);
 }
 
 .connected {

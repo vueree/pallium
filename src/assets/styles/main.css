@@ -1,3 +1,13 @@
+@import "@/assets/styles/typography.css";
+
+#app {
+  font-family: var(--font-primary);
+  font-size: var(--text-base);
+  line-height: var(--leading-normal);
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
 html,
 body {
   margin: 0;
@@ -5,16 +15,12 @@ body {
 
 header {
   height: 60px;
+  max-width: 1200px;
 }
 
 footer {
   padding: 16px;
   height: 28px;
-}
-
-input::placeholder {
-  color: #aaa;
-  opacity: 70%;
 }
 
 input {
@@ -25,4 +31,9 @@ input {
   padding: 6px 8px;
   background-color: rgb(55, 55, 55);
   width: 300px;
+}
+
+input::placeholder {
+  color: #aaa;
+  opacity: 70%;
 }

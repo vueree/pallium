@@ -13,7 +13,7 @@ const props = defineProps<{
 const router = useRouter();
 const { state, handleSubmit, isFormValid } = useAuth();
 
-const inputFields: InputField[] = [
+const authInputFields: InputField[] = [
   {
     model: "username",
     type: "text",
@@ -60,11 +60,11 @@ const getButtonLabel = () => {
     :class="['z-2 flex flex-column items-center relative', $style.form]"
     @submit.prevent="handleFormSubmit"
   >
-    <h3 class="title">{{ title }}</h3>
+    <h3 :class="['app-logo', $style.title]">{{ title }}</h3>
 
     <div class="flex flex-column gap-12">
       <InputBase
-        v-for="(field, index) in inputFields"
+        v-for="(field, index) in authInputFields"
         :key="index"
         :modelValue="state[field.model]"
         :type="field.type"
@@ -105,6 +105,7 @@ const getButtonLabel = () => {
 .title {
   margin-top: 140px;
   margin-bottom: 24px;
+  color: white;
 }
 
 .btn-container {

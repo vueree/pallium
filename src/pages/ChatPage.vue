@@ -135,10 +135,8 @@ watch(
 
 <style module>
 .chat-area {
-  background-color: var(--color-background);
   overflow-y: auto;
   padding: 12px;
-  border-radius: 8px;
 }
 
 .message {

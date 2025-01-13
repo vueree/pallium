@@ -1,9 +1,9 @@
 <script setup lang="ts">
+import { useHead } from "@vueuse/head";
 import { RouterView } from "vue-router";
 import HeaderBase from "@/components/HeaderBase.vue";
 import FooterBase from "@/components/FooterBase.vue";
 import ErrorNotification from "@/components/ErrorNotification.vue";
-import { useHead } from "@vueuse/head";
 
 useHead({
   link: [
@@ -14,7 +14,7 @@ useHead({
       crossorigin: "anonymous"
     },
     {
-      href: "https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@300;400;500;600;700&family=Orbitron:wght@400;500;600;700&display=swap",
+      href: "https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@300;400;500;600;700&family=Orbitron:wght@400;500;600;700;800;900&display=swap",
       rel: "stylesheet"
     }
   ]
@@ -33,27 +33,7 @@ useHead({
   </div>
 </template>
 
-<style>
-@import "@/assets/styles/typography.css";
-
-#app {
-  font-family: var(--font-primary);
-  font-size: var(--text-base);
-  line-height: var(--leading-normal);
-  -webkit-font-smoothing: antialiased;
-  -moz-osx-font-smoothing: grayscale;
-}
-</style>
-
 <style module>
-:root {
-  --background-position: -150%;
-  --size-large: 400%;
-  --gradient-opacity-high: 0.9;
-  --gradient-opacity-low: 0.8;
-  --nebula-opacity: 0.2;
-}
-
 .app-container {
   background-color: black;
   min-height: 100vh;

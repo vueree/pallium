@@ -1,19 +1,57 @@
 :root {
+  /* COLORS */
   --color-error: #dc3545;
   --color-red: #cc4f4f;
+  --color-own-message: #dcf8c6;
   --color-green: #66b366;
   --color-green-light: rgba(102, 179, 102, 0.5);
-  --glitch-offset: 3px;
-  --background-position: -150%;
-  --size-large: 400%;
+  --color-primary: rgb(52, 93, 255);
+  --color-border: rgba(173, 180, 230, 0.5);
+  --color-text-muted: #888;
+  --color-text-light: #f0f0f0;
+  --color-background: rgba(0, 0, 0, 0.5);
+  --nebula-opacity: 0.2;
+
+  /* GRADIENTS & EFFECTS */
   --gradient-opacity-high: 0.9;
   --gradient-opacity-low: 0.8;
-  --nebula-opacity: 0.2;
-  --color-primary: rgb(52, 93, 255);
-  --color-green: #66b366;
-  --color-background: rgba(0, 0, 0, 0.5);
-  --color-border: rgba(173, 180, 230, 0.5);
-  --color-text-light: #f0f0f0;
-  --color-text-muted: #888;
-  --color-own-message: #dcf8c6;
+  --glitch-offset: 3px;
+
+  /* FONTS */
+  --font-primary: "Space Grotesk", -apple-system, BlinkMacSystemFont, sans-serif;
+  --font-logo: "Orbitron", sans-serif;
+
+  /* FONT SIZES */
+  --text-xs: 0.75rem; /* 12px */
+  --text-sm: 0.875rem; /* 14px */
+  --text-base: 1rem; /* 16px */
+  --text-lg: 1.125rem; /* 18px */
+  --text-xl: 1.25rem; /* 20px */
+  --text-2xl: 1.35rem; /* 24px */
+
+  /* LINE HEIGHT */
+  --leading-tight: 1.25;
+  --leading-normal: 1.5;
+  --leading-relaxed: 1.625;
+
+  /* FONT WEIGHTS */
+  --font-light: 300;
+  --font-normal: 400;
+  --font-medium: 500;
+  --font-semibold: 600;
+  --font-bold: 700;
+
+  /* LETTER SPACING */
+  --tracking-tighter: -0.05em;
+  --tracking-tight: -0.025em;
+  --tracking-normal: 0;
+  --tracking-wide: 0.025em;
+  --tracking-wider: 0.05em;
+  --tracking-widest: 0.1em;
+
+  /* SIZES */
+  --size-large: 400%;
+
+  /* POSITIONING */
+  --background-position: -150%;
 }

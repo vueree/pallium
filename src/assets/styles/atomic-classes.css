@@ -1,100 +1,119 @@
-.z-1 {
-  z-index: 1;
-}
+:root {
+  /* POSITIONING */
+  .relative {
+    position: relative;
+  }
 
-.z-2 {
-  z-index: 2;
-}
+  .absolute {
+    position: absolute;
+  }
 
-.flex {
-  display: flex;
-}
+  .z-1 {
+    z-index: 1;
+  }
 
-.flex-column {
-  flex-direction: column;
-}
+  .z-2 {
+    z-index: 2;
+  }
 
-.justify-center {
-  justify-content: center;
-}
+  /* FLEXBOX */
+  .flex {
+    display: flex;
+  }
 
-.justify-between {
-  justify-content: space-between;
-}
+  .flex-column {
+    flex-direction: column;
+  }
 
-.justify-start {
-  justify-content: flex-start;
-}
+  .justify-center {
+    justify-content: center;
+  }
 
-.items-center {
-  align-items: center;
-}
+  .justify-between {
+    justify-content: space-between;
+  }
 
-.gap-12 {
-  gap: 12px;
-}
+  .justify-start {
+    justify-content: flex-start;
+  }
 
-.text-decoration-none {
-  text-decoration: none;
-}
+  .items-center {
+    align-items: center;
+  }
 
-.border-none {
-  border: none;
-}
+  .gap-12 {
+    gap: 12px;
+  }
 
-.mx-auto {
-  margin: 0 auto;
-}
+  /* ALIGNMENT */
+  .mx-auto {
+    margin: 0 auto;
+  }
 
-.rounded-10 {
-  border-radius: 10px;
-}
+  .mt-auto {
+    margin-top: auto;
+  }
 
-.pointer {
-  cursor: pointer;
-}
+  .text-center {
+    text-align: center;
+  }
 
-.max-width {
-  max-width: 800px;
-}
+  /* DIMENSIONS */
+  .max-width {
+    max-width: 800px;
+  }
 
-.w-full {
-  width: 100%;
-}
+  .w-full {
+    width: 100%;
+  }
 
-.cl_dived {
-  border-bottom: 1px solid #000000;
-  opacity: 25%;
-}
+  .max-height {
+    height: calc(100vh - 120px);
+  }
 
-.overflow-hidden {
-  overflow: hidden;
-}
+  /* BORDER & OUTLINE */
+  .border-none {
+    border: none;
+  }
 
-.max-height {
-  height: calc(100vh - 120px);
-}
+  .cl_dived {
+    border-bottom: 1px solid #000000;
+    opacity: 25%;
+  }
 
-.relative {
-  position: relative;
-}
+  .overflow-hidden {
+    overflow: hidden;
+  }
 
-.absolute {
-  position: absolute;
-}
+  /* TYPOGRAPHY */
+  .text-decoration-none {
+    text-decoration: none;
+  }
 
-.mt-auto {
-  margin-top: auto;
-}
+  .display-block {
+    display: block;
+  }
 
-.display-block {
-  display: block;
-}
+  /* CURSOR */
+  .pointer {
+    cursor: pointer;
+  }
 
-.text-center {
-  text-align: center;
-}
+  /* COLORS */
+  .cl_text-light {
+    color: var(--color-text-light);
+  }
 
-.cl_text-light {
-  color: var(--color-text-light);
+  .cl_green {
+    color: var(--color-green);
+  }
+
+  .cl_red {
+    color: var(--color-red);
+  }
+
+  /* RADIUS */
+  .rounded-10 {
+    border-radius: 10px;
+  }
 }

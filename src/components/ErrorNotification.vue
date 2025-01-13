@@ -10,13 +10,13 @@ const { error, isVisible } = storeToRefs(errorStore);
   <Transition name="fade">
     <div
       v-if="isVisible && error"
-      class="error-notification absolute rounded-10"
+      class="error-notification absolute rounded-10 error-text text-center"
     >
       {{ error }}
       <button
-        class="close-button border-none"
-        @click="errorStore.hideError"
+        class="close-button border-none close-button-text pointer"
         aria-label="Close error notification"
+        @click="errorStore.hideError"
       >
         ×
       </button>
@@ -30,10 +30,9 @@ const { error, isVisible } = storeToRefs(errorStore);
   left: 50%;
   transform: translateX(-50%);
   padding: 10px 30px 10px 10px;
-  color: #dc3545;
+  color: var(--color-red);
   background-color: #f8d7da;
   border: 1px solid #f5c6cb;
-  text-align: center;
   opacity: 0.9;
   width: 300px;
   z-index: 1000;
@@ -45,9 +44,7 @@ const { error, isVisible } = storeToRefs(errorStore);
   top: 50%;
   transform: translateY(-50%);
   background: none;
-  font-size: 20px;
-  cursor: pointer;
-  color: #dc3545;
+  color: var(--color-red);
   padding: 0 5px;
 }
 
