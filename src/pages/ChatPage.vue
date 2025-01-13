@@ -176,12 +176,12 @@ watch(
   transition: border-color 0.3s ease;
 }
 
-.text-area:focus {
-  border-color: var(--color-primary);
+.input-area {
+  margin-bottom: 12px;
 }
 
-.input-area {
-  margin-bottom: 8px;
+.text-area:focus {
+  border-color: var(--gradient-opacity-low);
 }
 
 .button-remove {

@@ -34,6 +34,15 @@
 
 /* 1. Логотип приложения */
 .app-logo {
+  font-family: var(--font-primary);
+  font-size: var(--text-xl);
+  font-weight: var(--font-medium);
+  letter-spacing: var(--tracking-widest);
+  line-height: var(--leading-tight);
+}
+
+/* 1. Заголовок страницы регистрации/авторизации */
+.title-text {
   font-family: var(--font-logo);
   font-size: var(--text-2xl);
   font-weight: var(--font-bold);

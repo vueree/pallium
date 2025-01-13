@@ -1,11 +1,11 @@
 :root {
   /* POSITIONING */
-  .relative {
-    position: relative;
-  }
-
   .absolute {
     position: absolute;
+  }
+
+  .relative {
+    position: relative;
   }
 
   .z-1 {
@@ -65,6 +65,10 @@
 
   .w-full {
     width: 100%;
+  }
+
+  .h-full {
+    height: 100%;
   }
 
   .max-height {

@@ -60,7 +60,7 @@ const getButtonLabel = () => {
     :class="['z-2 flex flex-column items-center relative', $style.form]"
     @submit.prevent="handleFormSubmit"
   >
-    <h3 :class="['app-logo', $style.title]">{{ title }}</h3>
+    <h3 :class="['app-logo cl_text-light', $style.title]">{{ title }}</h3>
 
     <div class="flex flex-column gap-12">
       <InputBase
@@ -77,7 +77,7 @@ const getButtonLabel = () => {
       />
     </div>
 
-    <div :class="[$style['btn-container'], 'flex gap-12 w-full']">
+    <div :class="['flex gap-12 w-full', $style['btn-container']]">
       <BtnBase
         :btnClass="$style['submit-button']"
         type="submit"
@@ -105,12 +105,11 @@ const getButtonLabel = () => {
 .title {
   margin-top: 140px;
   margin-bottom: 24px;
-  color: white;
 }
 
 .btn-container {
   margin-top: 20px;
-  width: 300px;
+  max-width: 300px;
 }
 
 .submit-button {

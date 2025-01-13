@@ -18,7 +18,7 @@ import type {
   AuthState,
   AuthMode,
   AuthCredentials,
-  AuthResponse
+  IAuthResponse
 } from "@/types";
 import type { AxiosError } from "axios";
 
@@ -59,7 +59,7 @@ const formatAuthError = (
 };
 
 const handleAuthResponse = async (
-  response: AuthResponse,
+  response: IAuthResponse,
   tokenExpiry: number
 ): Promise<void> => {
   const { token } = response;
@@ -88,7 +88,7 @@ const loginUser = async (credentials: AuthCredentials): Promise<void> => {
   }
 
   try {
-    const response = await apiClient.post<AuthResponse>(
+    const response = await apiClient.post<IAuthResponse>(
       "/auth/login",
       credentials
     );
@@ -99,6 +99,10 @@ const loginUser = async (credentials: AuthCredentials): Promise<void> => {
 
     const cleanToken = validateToken(response.data.token);
     await handleAuthResponse({ ...response.data, token: cleanToken }, 1);
+
+    if (response.data.user && response.data.user.username) {
+      localStorage.setItem("username", response.data.user.username);
+    }
   } catch (error) {
     console.error("Login error:", error);
     throw error;
@@ -112,7 +116,7 @@ const registerUser = async (credentials: AuthCredentials): Promise<void> => {
   }
 
   try {
-    const response = await axios.post<AuthResponse>(
+    const response = await axios.post<IAuthResponse>(
       `${API_URL}/auth/register`,
       credentials
     );
@@ -122,6 +126,10 @@ const registerUser = async (credentials: AuthCredentials): Promise<void> => {
       await handleAuthResponse({ ...response.data, token: cleanToken }, 7);
     } else {
       throw new Error("Token not received from server");
+    }
+
+    if (response.data.user && response.data.user.username) {
+      localStorage.setItem("username", response.data.user.username);
     }
   } catch (error) {
     console.error("Registration error:", error);

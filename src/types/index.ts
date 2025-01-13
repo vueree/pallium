@@ -1,10 +1,5 @@
 import { Socket } from "socket.io-client";
 
-export interface IAuthResponse {
-  token: string;
-  message?: string;
-}
-
 export interface IMessage {
   id?: string;
   message: string;
@@ -51,9 +46,19 @@ export interface AuthCredentials {
   password: string;
 }
 
-export interface AuthResponse {
+export interface ILoginResponse {
   token: string | undefined;
-  message?: string;
+  user?: {
+    id: number;
+    username: string;
+  };
+}
+
+export type AuthMode = "login" | "register";
+
+export interface IAuthResponse {
+  token: string | undefined;
+  message: string;
   user?: {
     id: number;
     username: string;
@@ -66,8 +71,6 @@ export interface AuthState {
   isLoading: boolean;
   error: string | null;
 }
-
-export type AuthMode = "login" | "register";
 
 export type State = {
   username: string;
