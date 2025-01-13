@@ -15,12 +15,15 @@ const handleLogout = () => {
     path: "/",
     domain: "http://localhost:3000"
   });
+  localStorage.removeItem("username");
   router.push({ name: "Login" });
 };
 </script>
 
 <template>
-  <header class="flex items-center justify-between w-full max-width mx-auto">
+  <header
+    class="z-2 flex items-center justify-between w-full max-width mx-auto relative"
+  >
     <a
       class="pointer text-decoration-none app-logo"
       @click.prevent="handleLogout"
@@ -29,10 +32,11 @@ const handleLogout = () => {
     </a>
     <span
       :class="[
-        'status-text',
+        'status-text relative overflow-hidden',
         $style.status,
-        isConnected ? $style['cl-green'] : $style['cl-red'],
-        isConnected ? $style['connected'] : $style['disconnected']
+        isConnected
+          ? [$style['cl-green'], $style['connected']]
+          : [$style['cl-red'], $style['disconnected']]
       ]"
       >{{ isConnected ? "С O N N E C T E D" : "D I S C O N N E C T E D" }}</span
     >
@@ -45,11 +49,6 @@ const handleLogout = () => {
   --color-green: #66b366;
   --color-red: #cc4f4f;
   --glitch-offset: 3px;
-}
-
-header {
-  z-index: 2;
-  position: relative;
 }
 
 a {
@@ -69,8 +68,7 @@ a:hover {
 .status {
   margin-left: 10px;
   display: inline-block;
-  position: relative;
-  overflow: hidden;
+  cursor: default;
 }
 
 .cl-green {
@@ -94,6 +92,7 @@ a:hover {
     0.025em 0.05em 0 rgba(0, 0, 255, 0.75);
   animation: glitch 500ms infinite, vhsNoise 2s infinite linear,
     vhsShake 1522ms infinite, vhsScanlines 18s linear infinite;
+  opacity: 50%;
 }
 
 .disconnected::before,

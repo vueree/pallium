@@ -70,19 +70,16 @@ watch(
 </script>
 
 <template>
-  <main
-    :class="$style['chat-container']"
-    class="flex flex-column justify-between h-full max-width"
-  >
+  <main class="flex flex-column justify-between h-full max-width relative z-2">
     <BtnBase
       v-if="messages && messages.length > 0"
-      :btnClass="[$style['button-remove'], 'absolute']"
+      :btnClass="['absolute', $style['button-remove']]"
       label="Clear"
       @click="clearMessages"
     />
     <div
       ref="chatAreaRef"
-      :class="[$style['chat-area'], 'flex flex-column w-full']"
+      :class="['flex flex-column w-full', $style['chat-area']]"
     >
       <LazyInfiniteLoader
         ref="loaderRef"
@@ -101,12 +98,12 @@ watch(
           message.username === username ? $style['own-message'] : ''
         ]"
       >
-        <span :class="[$style['message-user'], 'chat-username']">{{
+        <span :class="['chat-username', $style['message-user']]">{{
           message.username || "Anonymous"
         }}</span>
         <span class="display-block chat-message">{{ message.message }}</span>
         <span
-          :class="[$style['message-time'], 'display-block message-timestamp']"
+          :class="['display-block message-timestamp', $style['message-time']]"
         >
           {{ new Date(message.timestamp).toLocaleTimeString() }}
         </span>
@@ -114,13 +111,13 @@ watch(
     </div>
     <div
       :class="[
-        $style['input-area'],
-        'flex gap-12 items-center mx-auto w-full mt-auto'
+        'flex gap-12 items-center mx-auto w-full mt-auto',
+        $style['input-area']
       ]"
     >
       <textarea
         v-model="chatInputRef"
-        :class="[$style['text-area'], 'rounded-10 w-full']"
+        :class="['rounded-10 w-full', $style['text-area']]"
         placeholder="Enter your message..."
         rows="2"
         spellcheck="true"
@@ -137,22 +134,6 @@ watch(
 </template>
 
 <style module>
-:root {
-  --color-primary: rgb(52, 93, 255);
-  --color-green: #66b366;
-  --color-red: #cc4f4f;
-  --color-background: #000000;
-  --color-border: rgba(173, 180, 230, 0.5);
-  --color-text-light: #f0f0f0;
-  --color-text-muted: #888;
-  --color-own-message: #dcf8c6;
-}
-
-.chat-container {
-  z-index: 222;
-  position: relative;
-}
-
 .chat-area {
   background-color: var(--color-background);
   overflow-y: auto;

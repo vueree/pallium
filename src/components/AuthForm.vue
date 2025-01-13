@@ -57,8 +57,7 @@ const getButtonLabel = () => {
 
 <template>
   <form
-    :class="$style.form"
-    class="flex flex-column items-center"
+    :class="['z-2 flex flex-column items-center relative', $style.form]"
     @submit.prevent="handleFormSubmit"
   >
     <h3 class="title">{{ title }}</h3>
@@ -68,7 +67,6 @@ const getButtonLabel = () => {
         v-for="(field, index) in inputFields"
         :key="index"
         :modelValue="state[field.model]"
-        :inputClass="'rounded-10'"
         :type="field.type"
         :placeholder="field.placeholder"
         :required="true"
@@ -102,9 +100,6 @@ const getButtonLabel = () => {
   max-width: 400px;
   margin: 0 auto;
   padding: 20px;
-  z-index: 2;
-  position: relative;
-  background-color: rgba(14, 115, 37, 0.1);
 }
 
 .title {

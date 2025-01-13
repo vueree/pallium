@@ -43,7 +43,7 @@ const handleClick = (event: Event) => {
     :style="{ width }"
     :class="[
       btnClass,
-      'flex button-text items-center justify-center w-full pointer rounded-10 justify-center text-decoration-none border-none',
+      'flex button-text items-center justify-center w-full pointer rounded-10 justify-center text-decoration-none border-none cl_text-light',
       $style.btn,
       { [$style['btn-disabled']]: disabled }
     ]"
@@ -54,10 +54,6 @@ const handleClick = (event: Event) => {
 </template>
 
 <style module>
-.component {
-  color: white;
-}
-
 .btn {
   display: inline-flex;
   text-decoration: none;
