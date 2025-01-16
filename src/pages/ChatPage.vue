@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import { ref, onMounted, onUnmounted, watch, nextTick } from "vue";
+import Cookies from "js-cookie";
 import { useRouter } from "vue-router";
 import { useChat } from "@/composables/useChat";
 import BtnBase from "@/components/atom/BtnBase.vue";
@@ -9,6 +10,7 @@ const router = useRouter();
 const chatAreaRef = ref<HTMLElement | null>(null);
 const chatInputRef = ref("");
 const loaderRef = ref<HTMLElement | null>(null);
+const username = localStorage.getItem("username");
 
 const chat = useChat();
 
@@ -21,7 +23,7 @@ const {
   clearMessages,
   loadMoreMessages,
   handleMessageSend,
-  setupWebSocket
+  setupWebSocket,
 } = chat;
 
 const handleKeyPress = (event: KeyboardEvent) => {
@@ -35,18 +37,16 @@ const handleSendMessage = () => {
   handleMessageSend(chatInputRef.value, () => {
     chatInputRef.value = "";
   });
+  chatAreaRef.value?.scrollBy({ top: 9999, behavior: "smooth" });
 };
 
 onMounted(() => {
-  const token = localStorage.getItem("auth_token");
-  if (!token) {
-    nextTick(() => {
-      router.push({ name: "Login" });
-    });
-    return;
-  }
-
   setupWebSocket();
+  console.log("setupWebSocket: ", setupWebSocket);
+
+  nextTick(() => {
+    chatAreaRef.value?.scrollBy({ top: 9999, behavior: "smooth" });
+  });
 });
 
 onUnmounted(() => {
@@ -56,17 +56,15 @@ onUnmounted(() => {
   }
 });
 
-const username = localStorage.getItem("username");
-
-watch(
-  messages,
-  () => {
-    nextTick(() => {
-      chatAreaRef.value?.scrollTo({ top: chatAreaRef.value.scrollHeight });
-    });
-  },
-  { deep: true }
-);
+// watch(
+//   messages,
+//   () => {
+//     nextTick(() => {
+//       chatAreaRef.value?.scrollTo({ top: chatAreaRef.value.scrollHeight });
+//     });
+//   },
+//   { deep: true }
+// );
 </script>
 
 <template>
@@ -95,12 +93,12 @@ watch(
         :key="`${message.timestamp}-${index}`"
         :class="[
           $style.message,
-          message.username === username ? $style['own-message'] : ''
+          message.username === username ? $style['own-message'] : '',
         ]"
       >
-        <span :class="['chat-username', $style['message-user']]">{{
-          message.username || "Anonymous"
-        }}</span>
+        <span :class="['chat-username', $style['message-user']]">
+          {{ message.username }}
+        </span>
         <span class="display-block chat-message">{{ message.message }}</span>
         <span
           :class="['display-block message-timestamp', $style['message-time']]"
@@ -112,7 +110,7 @@ watch(
     <div
       :class="[
         'flex gap-12 items-center mx-auto w-full mt-auto',
-        $style['input-area']
+        $style['input-area'],
       ]"
     >
       <textarea

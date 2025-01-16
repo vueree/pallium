@@ -1,10 +1,8 @@
-export const ANONYMOUS = "Anonymous";
+export const ANONYMOUS = "111Anonymous";
 
 export const AUTH_TOKEN_KEY = "auth_token";
 
 export const MESSAGE_PER_PAGE = 15;
-
-export const MESSAGES_STORAGE_KEY = "chat_messages";
 
 export const API_URL = "http://localhost:3000";
 

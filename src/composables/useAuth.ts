@@ -1,8 +1,7 @@
+// useAuth.ts
+import { ref, computed } from "vue";
 import axios from "axios";
 import Cookies from "js-cookie";
-import { ref, computed } from "vue";
-import { useSocketStore } from "@/stores/socket.store";
-import { usePaginationStore } from "@/composables/usePaginationStore";
 import { useChat } from "@/composables/useChat";
 import apiClient from "@/api/api";
 
@@ -31,7 +30,6 @@ const validateCredentials = (credentials: AuthCredentials): string | null => {
 
 const validateToken = (token: string): string => {
   if (!token) return "";
-
   return token.startsWith("Bearer ") ? token.replace("Bearer ", "") : token;
 };
 
@@ -73,12 +71,15 @@ const handleAuthResponse = async (
     sameSite: "strict"
   });
 
-  const socketStore = useSocketStore();
-  socketStore.connect(token);
+  const { setupWebSocket, fetchMessageHistory } = useChat();
 
-  const pagination = usePaginationStore();
-  const { fetchMessageHistory } = useChat();
-  await fetchMessageHistory(pagination.currentPage, MESSAGE_PER_PAGE);
+  setupWebSocket();
+
+  await fetchMessageHistory(1, MESSAGE_PER_PAGE);
+
+  if (response.user?.username) {
+    localStorage.setItem("username", response.user.username);
+  }
 };
 
 const loginUser = async (credentials: AuthCredentials): Promise<void> => {
@@ -99,10 +100,6 @@ const loginUser = async (credentials: AuthCredentials): Promise<void> => {
 
     const cleanToken = validateToken(response.data.token);
     await handleAuthResponse({ ...response.data, token: cleanToken }, 1);
-
-    if (response.data.user && response.data.user.username) {
-      localStorage.setItem("username", response.data.user.username);
-    }
   } catch (error) {
     console.error("Login error:", error);
     throw error;
@@ -126,10 +123,6 @@ const registerUser = async (credentials: AuthCredentials): Promise<void> => {
       await handleAuthResponse({ ...response.data, token: cleanToken }, 7);
     } else {
       throw new Error("Token not received from server");
-    }
-
-    if (response.data.user && response.data.user.username) {
-      localStorage.setItem("username", response.data.user.username);
     }
   } catch (error) {
     console.error("Registration error:", error);
