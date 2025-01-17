@@ -1,13 +1,11 @@
 import { ref } from "vue";
 import { io, Socket } from "socket.io-client";
-import Cookies from "js-cookie";
 import { useSocketStore } from "@/stores/socket.store";
 import type { IMessage } from "@/types";
 
 export const useWebSocket = () => {
   const socket = ref<Socket | null>(null);
-    const socketStore = useSocketStore();
-  const token = Cookies.get("auth_token");
+  const socketStore = useSocketStore();
 
   const connect = (token: string) => {
     if (socket.value?.connected) {
@@ -23,11 +21,19 @@ export const useWebSocket = () => {
       transportOptions: {
         polling: {
           extraHeaders: {
-            Authorization: `Bearer ${token}`
-          }
-        }
-      }
+            Authorization: `Bearer ${token}`,
+          },
+        },
+      },
     });
+  };
+
+  const disconnect = () => {
+    if (socket.value) {
+      socket.value.disconnect();
+      socket.value = null;
+    }
+    socketStore.setConnected(false);
   };
 
   const setupEventListeners = (onNewMessage: (message: IMessage) => void) => {
@@ -43,7 +49,7 @@ export const useWebSocket = () => {
     socket.value.on("connect_error", (error) => {
       console.error("Socket connection error:", {
         message: error.message,
-        data: error
+        data: error,
       });
 
       if (error.message === "Invalid token") {
@@ -68,22 +74,14 @@ export const useWebSocket = () => {
     }
 
     socket.value.emit("send_message", {
-      message: messageText
+      message: messageText,
     });
-  };
-
-  const disconnect = () => {
-    if (socket.value) {
-      socket.value.disconnect();
-      socket.value = null;
-    }
-    socketStore.setConnected(false);
   };
 
   return {
     connect,
     setupEventListeners,
     sendMessage,
-    disconnect
+    disconnect,
   };
 };

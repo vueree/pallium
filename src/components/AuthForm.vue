@@ -19,7 +19,7 @@ const authInputFields: InputField[] = [
     type: "text",
     placeholder: "Username",
     autocomplete: "username",
-    minlength: undefined
+    minlength: undefined,
   },
   {
     model: "password",
@@ -27,8 +27,8 @@ const authInputFields: InputField[] = [
     placeholder: "Password",
     autocomplete:
       props.mode === "register" ? "new-password" : "current-password",
-    minlength: 6
-  }
+    minlength: 6,
+  },
 ];
 
 const handleInputChange = (

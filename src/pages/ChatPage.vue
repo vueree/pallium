@@ -1,30 +1,40 @@
 <script setup lang="ts">
 import { ref, onMounted, onUnmounted, watch, nextTick } from "vue";
-import Cookies from "js-cookie";
-import { useRouter } from "vue-router";
+// import Cookies from "js-cookie";
+// import { useRouter } from "vue-router";
 import { useChat } from "@/composables/useChat";
 import BtnBase from "@/components/atom/BtnBase.vue";
 import LazyInfiniteLoader from "@/components/atom/InfiniteLoader.vue";
 
-const router = useRouter();
-const chatAreaRef = ref<HTMLElement | null>(null);
+// const router = useRouter();
+// const chatAreaRef = ref<HTMLElement | null>(null);
 const chatInputRef = ref("");
 const loaderRef = ref<HTMLElement | null>(null);
 const username = localStorage.getItem("username");
 
 const chat = useChat();
-
 const {
   messages,
   isConnected,
   currentPage,
   totalPages,
   loading,
+  isLoadingMore,
+  chatAreaRef,
   clearMessages,
   loadMoreMessages,
   handleMessageSend,
   setupWebSocket,
 } = chat;
+
+const scrollToBottom = () => {
+  nextTick(() => {
+    if (chatAreaRef.value) {
+      const scrollHeight = chatAreaRef.value.scrollHeight;
+      chatAreaRef.value.scrollTop = scrollHeight;
+    }
+  });
+};
 
 const handleKeyPress = (event: KeyboardEvent) => {
   if (event.key === "Enter" && !event.shiftKey) {
@@ -36,17 +46,32 @@ const handleKeyPress = (event: KeyboardEvent) => {
 const handleSendMessage = () => {
   handleMessageSend(chatInputRef.value, () => {
     chatInputRef.value = "";
+    scrollToBottom();
   });
-  chatAreaRef.value?.scrollBy({ top: 9999, behavior: "smooth" });
 };
+
+watch(messages, (newMessages, oldMessages) => {
+  if (
+    !isLoadingMore.value &&
+    newMessages &&
+    oldMessages &&
+    newMessages.length > oldMessages.length
+  ) {
+    scrollToBottom();
+  }
+});
 
 onMounted(() => {
   setupWebSocket();
-  console.log("setupWebSocket: ", setupWebSocket);
-
-  nextTick(() => {
-    chatAreaRef.value?.scrollBy({ top: 9999, behavior: "smooth" });
-  });
+  watch(
+    messages,
+    (newMessages) => {
+      if (!isLoadingMore.value && newMessages && newMessages.length > 0) {
+        scrollToBottom();
+      }
+    },
+    { immediate: true }
+  );
 });
 
 onUnmounted(() => {
@@ -55,16 +80,6 @@ onUnmounted(() => {
     disconnect();
   }
 });
-
-// watch(
-//   messages,
-//   () => {
-//     nextTick(() => {
-//       chatAreaRef.value?.scrollTo({ top: chatAreaRef.value.scrollHeight });
-//     });
-//   },
-//   { deep: true }
-// );
 </script>
 
 <template>

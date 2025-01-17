@@ -1,5 +1,3 @@
-export const ANONYMOUS = "111Anonymous";
-
 export const AUTH_TOKEN_KEY = "auth_token";
 
 export const MESSAGE_PER_PAGE = 15;
@@ -8,7 +6,7 @@ export const API_URL = "http://localhost:3000";
 
 export const DEFAULT_ERROR_MESSAGES = {
   register: "Registration error",
-  login: "Login error"
+  login: "Login error",
 };
 
 export const AUTH_ERROR_MESSAGES: Record<
@@ -18,13 +16,13 @@ export const AUTH_ERROR_MESSAGES: Record<
   register: {
     "400": "Invalid data for registration",
     "409": "User with this username already exists",
-    "500": "Server error during registration"
+    "500": "Server error during registration",
   },
   login: {
     "400": "Invalid username or password",
     "401": "Invalid credentials",
-    "500": "Server error during login"
-  }
+    "500": "Server error during login",
+  },
 };
 
 export const CHAT_ERROR_MESSAGES = {
@@ -40,5 +38,5 @@ export const CHAT_ERROR_MESSAGES = {
   NOT_CONNECTED: "Not connected to chat. Please check your connection.",
   EMPTY_MESSAGE: "Message cannot be empty.",
   DISCONNECT_FAILED: "Error disconnecting from chat.",
-  CONNECT_FAILED: "Failed to connect to chat. Please try refreshing the page."
+  CONNECT_FAILED: "Failed to connect to chat. Please try refreshing the page.",
 };

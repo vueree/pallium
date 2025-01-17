@@ -11,12 +11,12 @@ const webSocketStore = useSocketStore();
 const { isConnected } = storeToRefs(webSocketStore);
 
 const handleLogout = () => {
+  router.push({ name: "Login" });
   Cookies.remove(AUTH_TOKEN_KEY, {
     path: "/",
-    domain: "http://localhost:3000"
+    domain: "http://localhost:3000",
   });
   localStorage.removeItem("username");
-  router.push({ name: "Login" });
 };
 </script>
 
@@ -34,7 +34,7 @@ const handleLogout = () => {
         $style.status,
         isConnected
           ? ['cl_green', $style['connected']]
-          : ['cl_red', $style['disconnected']]
+          : ['cl_red', $style['disconnected']],
       ]"
       >{{ isConnected ? "С O N N E C T E D" : "D I S C O N N E C T E D" }}</span
     >

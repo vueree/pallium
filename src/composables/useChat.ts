@@ -1,4 +1,4 @@
-import { ref, onUnmounted } from "vue";
+import { ref, onUnmounted, nextTick } from "vue";
 import { storeToRefs } from "pinia";
 import axios from "axios";
 import Cookies from "js-cookie";
@@ -8,7 +8,6 @@ import { usePaginationStore } from "@/composables/usePaginationStore";
 import { useError } from "@/composables/useError";
 import type { IMessage } from "@/types";
 import {
-  ANONYMOUS,
   AUTH_TOKEN_KEY,
   API_URL,
   CHAT_ERROR_MESSAGES,
@@ -19,6 +18,8 @@ export const useChat = () => {
   const messages = ref<IMessage[]>([]);
   const username = ref<string | null>(null);
   const errorState = ref(null);
+  const isLoadingMore = ref<boolean>(false);
+  const chatAreaRef = ref<HTMLElement | null>(null);
 
   const socketStore = useSocketStore();
   const webSocket = useWebSocket();
@@ -28,28 +29,8 @@ export const useChat = () => {
   const { isConnected } = storeToRefs(socketStore);
   const { currentPage, totalPages, loading } = storeToRefs(paginationStore);
 
-  const saveMessages = () => {
-    try {
-      localStorage.setItem("chat_messages", JSON.stringify(messages.value));
-    } catch (error) {
-      console.error("Failed to save messages to localStorage:", error);
-    }
-  };
-
-  const loadMessages = () => {
-    try {
-      const stored = localStorage.getItem("chat_messages");
-      if (stored) {
-        messages.value = JSON.parse(stored);
-      }
-    } catch (error) {
-      console.error("Failed to load messages from localStorage:", error);
-    }
-  };
-
   const handleNewMessage = (message: IMessage) => {
     messages.value.push(message);
-    saveMessages();
   };
 
   const fetchMessageHistory = async (
@@ -89,7 +70,6 @@ export const useChat = () => {
       );
 
       messages.value = sortedMessages;
-      saveMessages();
 
       paginationStore.totalPages = data.totalPages;
       paginationStore.currentPage = page;
@@ -119,7 +99,6 @@ export const useChat = () => {
       });
 
       messages.value = [];
-      saveMessages();
     } catch (error) {
       showError(CHAT_ERROR_MESSAGES.CLEAR_MESSAGES_FAILED);
     }
@@ -168,28 +147,51 @@ export const useChat = () => {
     }
   };
 
+  let previousScrollHeight = 0;
+  let previousScrollTop = 0;
+
   const loadMoreMessages = async (): Promise<void> => {
     if (
       loading.value ||
       !totalPages.value ||
-      currentPage.value >= totalPages.value
+      currentPage.value >= totalPages.value ||
+      isLoadingMore.value ||
+      !chatAreaRef.value
     )
       return;
 
+    isLoadingMore.value = true;
     loading.value = true;
+
+    // Сохраняем текущие значения скролла перед загрузкой
+    previousScrollHeight = chatAreaRef.value.scrollHeight;
+    previousScrollTop = chatAreaRef.value.scrollTop;
 
     try {
       const nextPage = currentPage.value + 1;
       await fetchMessageHistory(nextPage, MESSAGE_PER_PAGE);
+
+      // После загрузки сообщений ждем обновления DOM
+      await nextTick();
+
+      // Вычисляем и устанавливаем новую позицию скролла
+      if (chatAreaRef.value) {
+        const newScrollHeight = chatAreaRef.value.scrollHeight;
+        const heightDifference = newScrollHeight - previousScrollHeight;
+        chatAreaRef.value.scrollTop = previousScrollTop + heightDifference;
+      }
     } catch (error) {
       showError(CHAT_ERROR_MESSAGES.LOAD_MESSAGES_FAILED);
     } finally {
       loading.value = false;
+      isLoadingMore.value = false;
     }
   };
 
   return {
     messages,
+    chatAreaRef,
+    isLoadingMore,
     isConnected,
     username,
     currentPage,

@@ -1,17 +1,14 @@
 import { defineStore } from "pinia";
-
-interface SocketState {
-  isConnected: boolean;
-}
+import type { SocketStatus } from "@/types";
 
 export const useSocketStore = defineStore("socket", {
-  state: (): SocketState => ({
-    isConnected: false
+  state: (): SocketStatus => ({
+    isConnected: false,
   }),
 
   actions: {
     setConnected(status: boolean) {
       this.isConnected = status;
-    }
-  }
+    },
+  },
 });
