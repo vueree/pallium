@@ -21,6 +21,9 @@ export const useChat = () => {
   const isLoadingMore = ref<boolean>(false);
   const chatAreaRef = ref<HTMLElement | null>(null);
 
+  let previousScrollHeight = 0;
+  let previousScrollTop = 0;
+
   const socketStore = useSocketStore();
   const webSocket = useWebSocket();
   const paginationStore = usePaginationStore();
@@ -104,7 +107,7 @@ export const useChat = () => {
     }
   };
 
-  const handleMessageSend = (message: string, resetInput: () => void) => {
+  const handleMessageSend = async (message: string, resetInput: () => void) => {
     if (!message.trim()) {
       showError(CHAT_ERROR_MESSAGES.EMPTY_MESSAGE);
       return;
@@ -116,8 +119,9 @@ export const useChat = () => {
     }
 
     try {
-      webSocket.sendMessage(message.trim());
+      await webSocket.sendMessage(message.trim());
       resetInput();
+      await scrollToBottom();
     } catch (error) {
       showError(CHAT_ERROR_MESSAGES.SEND_MESSAGE_FAILED);
     }
@@ -147,8 +151,19 @@ export const useChat = () => {
     }
   };
 
-  let previousScrollHeight = 0;
-  let previousScrollTop = 0;
+  const scrollToBottom = async (immediate: boolean = false) => {
+    await nextTick();
+    if (chatAreaRef.value) {
+      setTimeout(() => {
+        if (chatAreaRef.value) {
+          chatAreaRef.value.scrollTo({
+            top: chatAreaRef.value.scrollHeight,
+            behavior: immediate ? "auto" : "smooth",
+          });
+        }
+      }, 10);
+    }
+  };
 
   const loadMoreMessages = async (): Promise<void> => {
     if (
@@ -163,7 +178,6 @@ export const useChat = () => {
     isLoadingMore.value = true;
     loading.value = true;
 
-    // Сохраняем текущие значения скролла перед загрузкой
     previousScrollHeight = chatAreaRef.value.scrollHeight;
     previousScrollTop = chatAreaRef.value.scrollTop;
 
@@ -171,10 +185,8 @@ export const useChat = () => {
       const nextPage = currentPage.value + 1;
       await fetchMessageHistory(nextPage, MESSAGE_PER_PAGE);
 
-      // После загрузки сообщений ждем обновления DOM
       await nextTick();
 
-      // Вычисляем и устанавливаем новую позицию скролла
       if (chatAreaRef.value) {
         const newScrollHeight = chatAreaRef.value.scrollHeight;
         const heightDifference = newScrollHeight - previousScrollHeight;
@@ -200,6 +212,7 @@ export const useChat = () => {
     errorState,
     clearMessages,
     loadMoreMessages,
+    scrollToBottom,
     handleMessageSend,
     setupWebSocket,
     fetchMessageHistory,

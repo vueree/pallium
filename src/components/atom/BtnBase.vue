@@ -20,7 +20,7 @@ const props = withDefaults(defineProps<IProps>(), {
   disabled: false,
   btnClass: "",
   width: "",
-  type: "button"
+  type: "button",
 });
 
 const handleClick = (event: Event) => {
@@ -46,7 +46,7 @@ const handleClick = (event: Event) => {
       'flex button-text items-center justify-center w-full pointer rounded-10 justify-center text-decoration-none border-none',
       $style.btn,
       { 'cl_text-light': !to },
-      { [$style['btn-disabled']]: disabled }
+      { [$style['btn-disabled']]: disabled },
     ]"
     @click="handleClick"
   >
@@ -61,7 +61,7 @@ const handleClick = (event: Event) => {
   transition: 0.5s;
   background-size: 200% auto;
   background-position: left center;
-  box-shadow: 0 0 20px #eee;
+  box-shadow: 0 0 10px #eee;
   border: none;
   background-image: linear-gradient(
     95deg,

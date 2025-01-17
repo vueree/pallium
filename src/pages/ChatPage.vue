@@ -1,13 +1,9 @@
 <script setup lang="ts">
 import { ref, onMounted, onUnmounted, watch, nextTick } from "vue";
-// import Cookies from "js-cookie";
-// import { useRouter } from "vue-router";
 import { useChat } from "@/composables/useChat";
 import BtnBase from "@/components/atom/BtnBase.vue";
 import LazyInfiniteLoader from "@/components/atom/InfiniteLoader.vue";
 
-// const router = useRouter();
-// const chatAreaRef = ref<HTMLElement | null>(null);
 const chatInputRef = ref("");
 const loaderRef = ref<HTMLElement | null>(null);
 const username = localStorage.getItem("username");
@@ -21,20 +17,13 @@ const {
   loading,
   isLoadingMore,
   chatAreaRef,
+  fetchMessageHistory,
   clearMessages,
   loadMoreMessages,
   handleMessageSend,
+  scrollToBottom,
   setupWebSocket,
 } = chat;
-
-const scrollToBottom = () => {
-  nextTick(() => {
-    if (chatAreaRef.value) {
-      const scrollHeight = chatAreaRef.value.scrollHeight;
-      chatAreaRef.value.scrollTop = scrollHeight;
-    }
-  });
-};
 
 const handleKeyPress = (event: KeyboardEvent) => {
   if (event.key === "Enter" && !event.shiftKey) {
@@ -50,24 +39,27 @@ const handleSendMessage = () => {
   });
 };
 
-watch(messages, (newMessages, oldMessages) => {
+watch(messages, async (newMessages, oldMessages) => {
   if (
     !isLoadingMore.value &&
     newMessages &&
     oldMessages &&
     newMessages.length > oldMessages.length
   ) {
-    scrollToBottom();
+    await scrollToBottom();
   }
 });
 
 onMounted(() => {
   setupWebSocket();
+
+  fetchMessageHistory(1, 1);
+
   watch(
     messages,
-    (newMessages) => {
+    async (newMessages) => {
       if (!isLoadingMore.value && newMessages && newMessages.length > 0) {
-        scrollToBottom();
+        await scrollToBottom(true);
       }
     },
     { immediate: true }
@@ -92,7 +84,7 @@ onUnmounted(() => {
     />
     <div
       ref="chatAreaRef"
-      :class="['flex flex-column w-full', $style['chat-area']]"
+      :class="['flex flex-column h-full', $style['chat-area']]"
     >
       <LazyInfiniteLoader
         ref="loaderRef"
@@ -148,8 +140,11 @@ onUnmounted(() => {
 
 <style module>
 .chat-area {
-  overflow-y: auto;
-  padding: 12px;
+  overflow-y: scroll;
+}
+
+.chat-area::-webkit-scrollbar {
+  display: none;
 }
 
 .message {
@@ -159,9 +154,13 @@ onUnmounted(() => {
   color: var(--color-text-light);
   border: 1px solid var(--color-border);
   align-self: flex-start;
-  margin-top: 12px;
-  margin-bottom: 12px;
+  margin-top: 6px;
+  margin-bottom: 6px;
   transition: background-color 0.3s ease;
+}
+
+.message:last-child {
+  margin-bottom: 20px;
 }
 
 .own-message {
@@ -190,6 +189,7 @@ onUnmounted(() => {
 }
 
 .input-area {
+  margin-top: 12px;
   margin-bottom: 12px;
 }
 
